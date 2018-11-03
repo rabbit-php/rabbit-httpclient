@@ -1,0 +1,23 @@
+{
+  "name": "rabbit/httpclient",
+  "description": "rabbit httpclient",
+  "type": "library",
+  "require": {
+    "rabbit/framework": "dev-master",
+    "swlib/saber": "^1.0",
+    "guzzlehttp/guzzle": "^6.0",
+    "yurunsoft/guzzle-swoole": "~1.1"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "albert",
+      "email": "63851587@qq.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "rabbit\\httpclient\\": "src/"
+    }
+  }
+}
