@@ -6,11 +6,10 @@
  * Time: 20:17
  */
 
-use GuzzleHttp\Client;
 use GuzzleHttp\DefaultHandler;
 
 if (!function_exists('guzzleHandler')) {
-    function guzzleHandler(string $handler = SwooleHandler::class)
+    function guzzleHandler(string $handler = \Yurun\Util\Swoole\Guzzle\SwooleHandler::class)
     {
         DefaultHandler::setDefaultHandler($handler);
     }
