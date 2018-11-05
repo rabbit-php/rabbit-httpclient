@@ -5,6 +5,7 @@ namespace rabbit\httpclient;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use rabbit\App;
+use rabbit\core\ObjectFactory;
 use rabbit\helper\JsonHelper;
 use Swlib\Saber;
 
@@ -16,8 +17,6 @@ class Client implements ClientInterface
 {
     /** @var array */
     protected $driver = [];
-    /** @var LoggerInterface */
-    protected $logger;
 
     /**
      * Client constructor.
@@ -115,14 +114,15 @@ class Client implements ClientInterface
     {
         try {
             if ($driver === 'saber') {
+                $id = ObjectFactory::get('idGen')->create();
                 $options = array_merge($options, [
                     'method' => $method,
                     'uri' => $url,
-                    'before' => function (Saber\Request $request) {
-                        App::info(JsonHelper::encode($request->getUri()), 'http');
+                    'before' => function (Saber\Request $request) use ($id, $options) {
+                        App::info(JsonHelper::encode(['requestId' => $id, 'options' => $options]), 'http');
                     },
-                    'after' => function (Saber\Response $response) {
-                        App::info(JsonHelper::encode($response->getUri()), 'http');
+                    'after' => function (Saber\Response $response) use ($id) {
+                        App::info(JsonHelper::encode(['requestId' => $id, 'reason' => $response->getReasonPhrase(), 'header' => $response->getHeaders(), 'result' => (string)$response->getBody()]), 'http');
                     }
                 ]);
                 $response = $this->getDriver($driver)->request($options);
@@ -130,17 +130,17 @@ class Client implements ClientInterface
                 $response = $this->getDriver($driver)->request($method, $url, $options);
             }
         } catch (\Exception $e) {
-            $message = sprintf('Something went wrong when calling consul (%s).', $e->getMessage());
+            $message = sprintf('Something went wrong (%s).', $e->getMessage());
 
-            $this->logger->error($message);
+            App::error($message, 'http');
 
             throw new \RuntimeException($message);
         }
 
         if (400 <= $response->getStatusCode()) {
-            $message = sprintf('Something went wrong when calling consul (%s - %s).', $response->getStatusCode(), $response->getReasonPhrase());
+            $message = sprintf('Something went wrong (%s - %s).', $response->getStatusCode(), $response->getReasonPhrase());
 
-            $this->logger->error($message);
+            App::error($message, 'http');
 
             $message .= "\n" . (string)$response->getBody();
             if (500 <= $response->getStatusCode()) {
