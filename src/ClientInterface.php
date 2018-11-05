@@ -3,6 +3,8 @@
 
 namespace rabbit\httpclient;
 
+use Psr\Http\Message\ResponseInterface;
+
 /**
  * Interface ClientInterface
  * @package rabbit\httpclient
@@ -10,51 +12,58 @@ namespace rabbit\httpclient;
 interface ClientInterface
 {
     /**
-     * @param null $url
+     * @param string|null $url
      * @param array $options
-     * @return mixed
+     * @param string $driver
+     * @return ResponseInterface
      */
-    public function get($url = null, array $options = array());
+    public function get(string $url = null, array $options = array(), string $driver = 'saber'): ResponseInterface;
 
     /**
-     * @param $url
+     * @param string $url
      * @param array $options
-     * @return mixed
+     * @param string $driver
+     * @return ResponseInterface
      */
-    public function head($url, array $options = array());
+    public function head(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface;
 
     /**
-     * @param $url
+     * @param string $url
      * @param array $options
-     * @return mixed
+     * @param string $driver
+     * @return ResponseInterface
      */
-    public function delete($url, array $options = array());
+    public function delete(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface;
 
     /**
-     * @param $url
+     * @param string $url
      * @param array $options
-     * @return mixed
+     * @param string $driver
+     * @return ResponseInterface
      */
-    public function put($url, array $options = array());
+    public function put(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface;
 
     /**
-     * @param $url
+     * @param string $url
      * @param array $options
-     * @return mixed
+     * @param string $driver
+     * @return ResponseInterface
      */
-    public function patch($url, array $options = array());
+    public function patch(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface;
 
     /**
-     * @param $url
+     * @param string $url
      * @param array $options
-     * @return mixed
+     * @param string $driver
+     * @return ResponseInterface
      */
-    public function post($url, array $options = array());
+    public function post(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface;
 
     /**
-     * @param $url
+     * @param string $url
      * @param array $options
-     * @return mixed
+     * @param string $driver
+     * @return ResponseInterface
      */
-    public function options($url, array $options = array());
+    public function options(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface;
 }
