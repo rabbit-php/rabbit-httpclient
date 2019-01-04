@@ -21,7 +21,6 @@ class Client implements ClientInterface
     /**
      * Client constructor.
      * @param array $options
-     * @param LoggerInterface|null $logger
      * @param array $driver
      */
     public function __construct(array $options = array(), array $driver = [])
@@ -35,9 +34,10 @@ class Client implements ClientInterface
     }
 
     /**
-     * @param null $url
+     * @param string|null $url
      * @param array $options
-     * @return ConsulResponse
+     * @param string $driver
+     * @return ResponseInterface
      */
     public function get(string $url = null, array $options = array(), string $driver = 'saber'): ResponseInterface
     {
@@ -45,9 +45,10 @@ class Client implements ClientInterface
     }
 
     /**
-     * @param $url
+     * @param string $url
      * @param array $options
-     * @return ConsulResponse
+     * @param string $driver
+     * @return ResponseInterface
      */
     public function head(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface
     {
@@ -55,9 +56,10 @@ class Client implements ClientInterface
     }
 
     /**
-     * @param $url
+     * @param string $url
      * @param array $options
-     * @return ConsulResponse
+     * @param string $driver
+     * @return ResponseInterface
      */
     public function delete(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface
     {
@@ -65,9 +67,10 @@ class Client implements ClientInterface
     }
 
     /**
-     * @param $url
+     * @param string $url
      * @param array $options
-     * @return mixed|ConsulResponse
+     * @param string $driver
+     * @return ResponseInterface
      */
     public function put(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface
     {
@@ -75,9 +78,10 @@ class Client implements ClientInterface
     }
 
     /**
-     * @param $url
+     * @param string $url
      * @param array $options
-     * @return mixed|ConsulResponse
+     * @param string $driver
+     * @return ResponseInterface
      */
     public function patch(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface
     {
@@ -85,9 +89,10 @@ class Client implements ClientInterface
     }
 
     /**
-     * @param $url
+     * @param string $url
      * @param array $options
-     * @return mixed|ConsulResponse
+     * @param string $driver
+     * @return ResponseInterface
      */
     public function post(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface
     {
@@ -95,9 +100,10 @@ class Client implements ClientInterface
     }
 
     /**
-     * @param $url
+     * @param string $url
      * @param array $options
-     * @return mixed|ConsulResponse
+     * @param string $driver
+     * @return ResponseInterface
      */
     public function options(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface
     {
@@ -105,16 +111,23 @@ class Client implements ClientInterface
     }
 
     /**
-     * @param $method
-     * @param $url
-     * @param $options
-     * @return ConsulResponse
+     * @param string $method
+     * @param string $url
+     * @param array $options
+     * @param string $driver
+     * @return ResponseInterface
+     * @throws \Exception
      */
     protected function doRequest(string $method, string $url, array $options, string $driver = 'saber'): ResponseInterface
     {
         try {
             if ($driver === 'saber') {
-                $id = ObjectFactory::get('idGen')->create();
+                $id = ObjectFactory::get('idGen', false);
+                if (!$id) {
+                    $id = uniqid();
+                } else {
+                    $id = $id->create();
+                }
                 $options = array_merge($options, [
                     'method' => $method,
                     'uri' => $url,
