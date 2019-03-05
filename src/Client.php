@@ -122,12 +122,7 @@ class Client implements ClientInterface
     {
         try {
             if ($driver === 'saber') {
-                $id = ObjectFactory::get('idGen', false);
-                if (!$id) {
-                    $id = uniqid();
-                } else {
-                    $id = $id->create();
-                }
+                $id = uniqid();
                 $options = array_merge($options, [
                     'method' => $method,
                     'uri' => $url,
