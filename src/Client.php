@@ -2,11 +2,7 @@
 
 namespace rabbit\httpclient;
 
-use Psr\Http\Message\ResponseInterface;
-use Psr\Log\LoggerInterface;
 use rabbit\App;
-use rabbit\core\ObjectFactory;
-use rabbit\helper\JsonHelper;
 use Swlib\Saber;
 
 /**
@@ -37,9 +33,9 @@ class Client implements ClientInterface
      * @param string|null $url
      * @param array $options
      * @param string $driver
-     * @return ResponseInterface
+     * @return Response
      */
-    public function get(string $url = null, array $options = array(), string $driver = 'saber'): ResponseInterface
+    public function get(string $url = null, array $options = array(), string $driver = 'saber'): Response
     {
         return $this->doRequest('GET', $url, $options);
     }
@@ -48,9 +44,9 @@ class Client implements ClientInterface
      * @param string $url
      * @param array $options
      * @param string $driver
-     * @return ResponseInterface
+     * @return Response
      */
-    public function head(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface
+    public function head(string $url, array $options = array(), string $driver = 'saber'): Response
     {
         return $this->doRequest('HEAD', $url, $options);
     }
@@ -59,9 +55,9 @@ class Client implements ClientInterface
      * @param string $url
      * @param array $options
      * @param string $driver
-     * @return ResponseInterface
+     * @return Response
      */
-    public function delete(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface
+    public function delete(string $url, array $options = array(), string $driver = 'saber'): Response
     {
         return $this->doRequest('DELETE', $url, $options);
     }
@@ -70,9 +66,9 @@ class Client implements ClientInterface
      * @param string $url
      * @param array $options
      * @param string $driver
-     * @return ResponseInterface
+     * @return Response
      */
-    public function put(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface
+    public function put(string $url, array $options = array(), string $driver = 'saber'): Response
     {
         return $this->doRequest('PUT', $url, $options);
     }
@@ -81,9 +77,9 @@ class Client implements ClientInterface
      * @param string $url
      * @param array $options
      * @param string $driver
-     * @return ResponseInterface
+     * @return Response
      */
-    public function patch(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface
+    public function patch(string $url, array $options = array(), string $driver = 'saber'): Response
     {
         return $this->doRequest('PATCH', $url, $options);
     }
@@ -92,9 +88,9 @@ class Client implements ClientInterface
      * @param string $url
      * @param array $options
      * @param string $driver
-     * @return ResponseInterface
+     * @return Response
      */
-    public function post(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface
+    public function post(string $url, array $options = array(), string $driver = 'saber'): Response
     {
         return $this->doRequest('POST', $url, $options);
     }
@@ -103,9 +99,9 @@ class Client implements ClientInterface
      * @param string $url
      * @param array $options
      * @param string $driver
-     * @return ResponseInterface
+     * @return Response
      */
-    public function options(string $url, array $options = array(), string $driver = 'saber'): ResponseInterface
+    public function options(string $url, array $options = array(), string $driver = 'saber'): Response
     {
         return $this->doRequest('OPTIONS', $url, $options);
     }
@@ -115,23 +111,16 @@ class Client implements ClientInterface
      * @param string $url
      * @param array $options
      * @param string $driver
-     * @return ResponseInterface
+     * @return Response
      * @throws \Exception
      */
-    protected function doRequest(string $method, string $url, array $options, string $driver = 'saber'): ResponseInterface
+    protected function doRequest(string $method, string $url, array $options, string $driver = 'saber'): Response
     {
         try {
             if ($driver === 'saber') {
-                $id = uniqid();
                 $options = array_merge($options, [
                     'method' => $method,
-                    'uri' => $url,
-                    'before' => function (Saber\Request $request) use ($id, $options) {
-                        App::info(JsonHelper::encode(['requestId' => $id, 'options' => $options]), 'http');
-                    },
-                    'after' => function (Saber\Response $response) use ($id) {
-                        App::info(JsonHelper::encode(['requestId' => $id, 'reason' => $response->getReasonPhrase(), 'header' => $response->getHeaders(), 'result' => (string)$response->getBody()]), 'http');
-                    }
+                    'uri' => $url
                 ]);
                 $response = $this->getDriver($driver)->request($options);
             } else {
@@ -146,7 +135,8 @@ class Client implements ClientInterface
         }
 
         if (400 <= $response->getStatusCode()) {
-            $message = sprintf('Something went wrong (%s - %s).', $response->getStatusCode(), $response->getReasonPhrase());
+            $message = sprintf('Something went wrong (%s - %s).', $response->getStatusCode(),
+                $response->getReasonPhrase());
 
             App::error($message, 'http');
 
@@ -158,7 +148,7 @@ class Client implements ClientInterface
             throw new \RuntimeException($message, $response->getStatusCode());
         }
 
-        return $response;
+        return new Response($response);
     }
 
     /**
