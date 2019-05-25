@@ -13,13 +13,16 @@ class Client implements ClientInterface
 {
     /** @var array */
     protected $driver = [];
+    /** @var string */
+    private $default;
 
     /**
      * Client constructor.
      * @param array $options
+     * @param string $default
      * @param array $driver
      */
-    public function __construct(array $options = array(), array $driver = [])
+    public function __construct(array $options = array(), string $default = 'saber', array $driver = [])
     {
         if (empty($driver)) {
             $this->driver['saber'] = Saber::create($options);
@@ -27,83 +30,91 @@ class Client implements ClientInterface
         } else {
             $this->driver = $driver;
         }
+        $this->default = $default;
     }
 
     /**
      * @param string|null $url
      * @param array $options
-     * @param string $driver
+     * @param string|null $driver
      * @return Response
+     * @throws \Exception
      */
-    public function get(string $url = null, array $options = array(), string $driver = 'saber'): Response
+    public function get(string $url = null, array $options = array(), string $driver = null): Response
     {
-        return $this->doRequest('GET', $url, $options);
+        return $this->doRequest('GET', $url, $options, $driver);
     }
 
     /**
      * @param string $url
      * @param array $options
-     * @param string $driver
+     * @param string|null $driver
      * @return Response
+     * @throws \Exception
      */
-    public function head(string $url, array $options = array(), string $driver = 'saber'): Response
+    public function head(string $url, array $options = array(), string $driver = null): Response
     {
-        return $this->doRequest('HEAD', $url, $options);
+        return $this->doRequest('HEAD', $url, $options, $driver);
     }
 
     /**
      * @param string $url
      * @param array $options
-     * @param string $driver
+     * @param string|null $driver
      * @return Response
+     * @throws \Exception
      */
-    public function delete(string $url, array $options = array(), string $driver = 'saber'): Response
+    public function delete(string $url, array $options = array(), string $driver = null): Response
     {
-        return $this->doRequest('DELETE', $url, $options);
+        return $this->doRequest('DELETE', $url, $options, $driver);
     }
 
     /**
      * @param string $url
      * @param array $options
-     * @param string $driver
+     * @param string|null $driver
      * @return Response
+     * @throws \Exception
      */
-    public function put(string $url, array $options = array(), string $driver = 'saber'): Response
+    public function put(string $url, array $options = array(), string $driver = null): Response
     {
-        return $this->doRequest('PUT', $url, $options);
+        return $this->doRequest('PUT', $url, $options, $driver);
     }
 
     /**
      * @param string $url
      * @param array $options
-     * @param string $driver
+     * @param string|null $driver
      * @return Response
+     * @throws \Exception
      */
-    public function patch(string $url, array $options = array(), string $driver = 'saber'): Response
+    public function patch(string $url, array $options = array(), string $driver = null): Response
     {
-        return $this->doRequest('PATCH', $url, $options);
+        return $this->doRequest('PATCH', $url, $options, $driver);
     }
 
     /**
      * @param string $url
      * @param array $options
-     * @param string $driver
+     * @param string|null $driver
      * @return Response
+     * @throws \Exception
      */
-    public function post(string $url, array $options = array(), string $driver = 'saber'): Response
+    public function post(string $url, array $options = array(), string $driver = null): Response
     {
-        return $this->doRequest('POST', $url, $options);
+        return $this->doRequest('POST', $url, $options, $driver);
     }
 
     /**
      * @param string $url
      * @param array $options
-     * @param string $driver
+     * @param string|null $driver
      * @return Response
+     * @throws \Exception
      */
-    public function options(string $url, array $options = array(), string $driver = 'saber'): Response
+    public function options(string $url, array $options = array(), string $driver = null): Response
     {
-        return $this->doRequest('OPTIONS', $url, $options);
+        return $this->doRequest('OPTIONS', $url, $options, $driver);
     }
 
     /**
@@ -114,10 +125,10 @@ class Client implements ClientInterface
      * @return Response
      * @throws \Exception
      */
-    protected function doRequest(string $method, string $url, array $options, string $driver = 'saber'): Response
+    protected function doRequest(string $method, string $url, array $options, string $driver = null): Response
     {
         try {
-            if ($driver === 'saber') {
+            if ($driver === 'saber' || ($driver === null && $this->default === 'saber')) {
                 $options = array_merge($options, [
                     'method' => $method,
                     'uri' => $url
