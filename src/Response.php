@@ -67,7 +67,7 @@ class Response implements ResponseInterface
      */
     public function getHeader($name)
     {
-        $this->response->getHeader($name);
+        return $this->response->getHeader($name);
     }
 
     /**
