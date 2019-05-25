@@ -128,7 +128,7 @@ class Client implements ClientInterface
     protected function doRequest(string $method, string $url, array $options, string $driver = null): Response
     {
         try {
-            if ($driver === 'saber' || ($driver === null && $this->default === 'saber')) {
+            if ($driver === 'saber' || ($driver === null && ($driver = $this->default) === 'saber')) {
                 $options = array_merge($options, [
                     'method' => $method,
                     'uri' => $url
