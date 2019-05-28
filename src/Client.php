@@ -3,7 +3,6 @@
 namespace rabbit\httpclient;
 
 use GuzzleHttp\Handler\StreamHandler;
-use GuzzleHttp\HandlerStack;
 use rabbit\App;
 use rabbit\exception\NotSupportedException;
 use Swlib\Saber;
@@ -29,7 +28,7 @@ class Client implements ClientInterface
     {
         $this->parseOptions($options);
         if (empty($driver)) {
-            HandlerStack::create(new StreamHandler());
+            $options['handler'] = new StreamHandler();
             $this->driver['guzzle'] = new \GuzzleHttp\Client($options);
             if (isset($options['auth']) && !isset($options['auth']['username'])) {
                 $options['auth'] = [
