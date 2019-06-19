@@ -97,15 +97,17 @@ class Client implements ClientInterface
     protected function doRequest(string $method, string $url, array $options, string $driver = null): Response
     {
         try {
-            $options['base_uri'] = $url;
-            $this->parseOptions($options);
-            $url = $options['base_uri'];
-            unset($options['base_uri']);
+            if (!empty($url)) {
+                $options['base_uri'] = $url;
+                $this->parseOptions($options);
+                $url = $options['base_uri'];
+                unset($options['base_uri']);
+            }
             if ($driver === 'saber' || ($driver = $this->default) === 'saber') {
-                $options = array_merge($options, [
+                $options = array_merge($options, array_filter([
                     'method' => $method,
                     'uri' => $url
-                ]);
+                ]));
                 if (isset($options['auth']) && !isset($options['auth']['username'])) {
                     $options['auth'] = [
                         'username' => $options['auth'][0],
