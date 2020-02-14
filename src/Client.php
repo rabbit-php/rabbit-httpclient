@@ -5,19 +5,21 @@ namespace rabbit\httpclient;
 use rabbit\App;
 use rabbit\exception\NotSupportedException;
 use rabbit\helper\ArrayHelper;
+use rabbit\helper\UrlHelper;
 use Swlib\Saber;
 
 /**
  * Class Client
  * @package rabbit\consul
- * @method Response get(string $url = null, array $options = array(), string $driver = 'saber')
- * @method Response head(string $url = null, array $options = array(), string $driver = 'saber')
- * @method Response put(string $url = null, array $options = array(), string $driver = 'saber')
- * @method Response post(string $url = null, array $options = array(), string $driver = 'saber')
- * @method Response patch(string $url = null, array $options = array(), string $driver = 'saber')
- * @method Response delete(string $url = null, array $options = array(), string $driver = 'saber')
+ * @method Response get(string $url = null, array $options = array(), string $driver = 'saber'): Response
+ * @method Response head(string $url = null, array $options = array(), string $driver = 'saber'): Response
+ * @method Response put(string $url = null, array $options = array(), string $driver = 'saber'): Response
+ * @method Response post(string $url = null, array $options = array(), string $driver = 'saber'): Response
+ * @method Response patch(string $url = null, array $options = array(), string $driver = 'saber'): Response
+ * @method Response delete(string $url = null, array $options = array(), string $driver = 'saber'): Response
+ * @method Response options(string $url, array $options = array(), string $driver = 'saber') : Response
  */
-class Client implements ClientInterface
+class Client
 {
     /** @var array */
     protected $driver = [];
@@ -58,26 +60,18 @@ class Client implements ClientInterface
      */
     private function parseOptions(): void
     {
-        if (null === $uri = ArrayHelper::getOneValue($this->options, ['uri', 'base_uri']) || isset($this->options['auth'])) {
+        if (null === ($uri = ArrayHelper::getOneValue($this->options, ['uri', 'base_uri'])) || isset($this->options['auth'])) {
             return;
         }
+
         $parsed = parse_url($uri);
-        if (!isset($parsed['path'])) {
-            $parsed['path'] = '/';
-        }
-        $user = !empty($parsed['user']) ? $parsed['user'] : '';
-        $pwd = !empty($parsed['pass']) ? $parsed['pass'] : '';
-        $this->options['base_uri'] = (isset($parsed['scheme']) ? $parsed['scheme'] : $defaultScheme)
-            . '://'
-            . $parsed['host']
-            . (!empty($parsed['port']) ? ':' . $parsed['port'] : '')
-            . $parsed['path']
-            . '?'
-            . $parsed['query'];
-        if (!empty($user)) {
+        $user = isset($parsed['user']) ? $parsed['user'] : '';
+        $pass = isset($parsed['pass']) ? $parsed['pass'] : '';
+        $this->options['base_uri'] = UrlHelper::unparse_url($parsed, false);
+        if (!empty($parsed['user'])) {
             $this->options['auth'] = [
                 $user,
-                $pwd
+                $pass
             ];
         }
     }
