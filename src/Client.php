@@ -23,6 +23,8 @@ class Client implements ClientInterface
     protected $driver = [];
     /** @var string */
     private $default;
+    /** @var array */
+    protected $options = [];
 
     /**
      * Client constructor.
@@ -32,16 +34,17 @@ class Client implements ClientInterface
      */
     public function __construct(array $options = array(), string $default = 'saber', array $driver = [])
     {
-        $this->parseOptions($options);
+        $this->options = $options;
+        $this->parseOptions();
         if (empty($driver)) {
-            $this->driver['guzzle'] = new \GuzzleHttp\Client($options);
-            if (isset($options['auth']) && !isset($options['auth']['username'])) {
-                $options['auth'] = [
-                    'username' => $options['auth'][0],
-                    'password' => $options['auth'][1]
+            $this->driver['guzzle'] = new \GuzzleHttp\Client($this->options);
+            if (isset($this->options['auth']) && !isset($options['auth']['username'])) {
+                $this->options['auth'] = [
+                    'username' => $this->options['auth'][0],
+                    'password' => $this->options['auth'][1]
                 ];
             }
-            $this->driver['saber'] = Saber::create($options);
+            $this->driver['saber'] = Saber::create($this->options);
         } else {
             $this->driver = $driver;
         }
@@ -53,9 +56,9 @@ class Client implements ClientInterface
      * @param string $driver
      * @return array
      */
-    private function parseOptions(array &$options): void
+    private function parseOptions(): void
     {
-        if (null === $uri = ArrayHelper::getOneValue($options, ['base_uri', 'uri']) || isset($options['auth'])) {
+        if (null === $uri = ArrayHelper::getOneValue($this->options, ['uri', 'base_uri']) || isset($this->options['auth'])) {
             return;
         }
         $parsed = parse_url($uri);
@@ -64,7 +67,7 @@ class Client implements ClientInterface
         }
         $user = !empty($parsed['user']) ? $parsed['user'] : '';
         $pwd = !empty($parsed['pass']) ? $parsed['pass'] : '';
-        $options['base_uri'] = (isset($parsed['scheme']) ? $parsed['scheme'] : $defaultScheme)
+        $this->options['base_uri'] = (isset($parsed['scheme']) ? $parsed['scheme'] : $defaultScheme)
             . '://'
             . $parsed['host']
             . (!empty($parsed['port']) ? ':' . $parsed['port'] : '')
@@ -72,7 +75,7 @@ class Client implements ClientInterface
             . '?'
             . $parsed['query'];
         if (!empty($user)) {
-            $options['auth'] = [
+            $this->options['auth'] = [
                 $user,
                 $pwd
             ];
@@ -109,6 +112,7 @@ class Client implements ClientInterface
     public function request(array $options, string $driver = null): Response
     {
         try {
+            $options = array_merge($this->options, $options);
             if ($driver === 'saber' || ($driver = $this->default) === 'saber') {
                 if (isset($options['auth']) && !isset($options['auth']['username'])) {
                     $options['auth'] = [
@@ -119,7 +123,7 @@ class Client implements ClientInterface
                 $response = $this->getDriver($driver)->request($options);
             } elseif ($driver === 'guzzle' || ($driver = $this->default) === 'guzzle') {
                 $method = ArrayHelper::getOneValue($options, ['method']);
-                $uri = ArrayHelper::getOneValue($options, ['base_uri', 'uri']);
+                $uri = ArrayHelper::getOneValue($options, ['uri', 'base_uri']);
                 $ext = array_filter([
                     'query' => ArrayHelper::getOneValue($options, ['uri_query', 'query'], null, true),
                     'save_to' => ArrayHelper::getOneValue($options, ['download_dir'], null, true)
