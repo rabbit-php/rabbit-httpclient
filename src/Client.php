@@ -121,8 +121,8 @@ class Client implements ClientInterface
                 $method = ArrayHelper::getOneValue($options, ['method']);
                 $uri = ArrayHelper::getOneValue($options, ['base_uri', 'uri']);
                 $ext = array_filter([
-                    'query' => ArrayHelper::getOneValue($options, ['uri_query', 'query']),
-                    'save_to' => ArrayHelper::getOneValue($options, ['download_dir'])
+                    'query' => ArrayHelper::getOneValue($options, ['uri_query', 'query'], null, true),
+                    'save_to' => ArrayHelper::getOneValue($options, ['download_dir'], null, true)
                 ]);
                 $response = $this->getDriver($driver)->request($method, $url, array_merge($options, $ext));
             } else {
