@@ -94,7 +94,7 @@ class Client implements ClientInterface
      * @return Response
      * @throws \Exception
      */
-    protected function doRequest(string $method, string $url, array $options, string $driver = null): Response
+    public function doRequest(string $method, string $url, array $options, string $driver = null): Response
     {
         try {
             if (!empty($url)) {
