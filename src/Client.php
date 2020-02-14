@@ -2,14 +2,20 @@
 
 namespace rabbit\httpclient;
 
-use GuzzleHttp\Handler\StreamHandler;
 use rabbit\App;
 use rabbit\exception\NotSupportedException;
+use rabbit\helper\ArrayHelper;
 use Swlib\Saber;
 
 /**
  * Class Client
  * @package rabbit\consul
+ * @method Response get(string $url = null, array $options = array(), string $driver = 'saber')
+ * @method Response head(string $url = null, array $options = array(), string $driver = 'saber')
+ * @method Response put(string $url = null, array $options = array(), string $driver = 'saber')
+ * @method Response post(string $url = null, array $options = array(), string $driver = 'saber')
+ * @method Response patch(string $url = null, array $options = array(), string $driver = 'saber')
+ * @method Response delete(string $url = null, array $options = array(), string $driver = 'saber')
  */
 class Client implements ClientInterface
 {
@@ -28,7 +34,6 @@ class Client implements ClientInterface
     {
         $this->parseOptions($options);
         if (empty($driver)) {
-            $options['handler'] = new StreamHandler();
             $this->driver['guzzle'] = new \GuzzleHttp\Client($options);
             if (isset($options['auth']) && !isset($options['auth']['username'])) {
                 $options['auth'] = [
@@ -50,10 +55,10 @@ class Client implements ClientInterface
      */
     private function parseOptions(array &$options): void
     {
-        if (!isset($options['base_uri']) || isset($options['auth'])) {
+        if (null === $uri = ArrayHelper::getOneValue($options, ['base_uri', 'uri']) || isset($options['auth'])) {
             return;
         }
-        $parsed = parse_url($options['base_uri']);
+        $parsed = parse_url($uri);
         if (!isset($parsed['path'])) {
             $parsed['path'] = '/';
         }
@@ -75,39 +80,36 @@ class Client implements ClientInterface
     }
 
     /**
-     * @param string|null $url
+     * @param $name
+     * @param $arguments
+     * @return Response
+     * @throws \Exception
+     */
+    public function __call($name, $arguments)
+    {
+        if (count($args) < 1) {
+            throw new \InvalidArgumentException('Magic request methods require a URI and optional options array');
+        }
+
+        $uri = $args[0];
+        $opts = isset($args[1]) ? $args[1] : [];
+        $driver = isset($args[2]) ? $args[2] : null;
+        return $this->request(array_merge($options, [
+            'method' => $name,
+            'uri' => $url
+        ]), $driver);
+    }
+
+    /**
      * @param array $options
      * @param string|null $driver
      * @return Response
      * @throws \Exception
      */
-    public function get(string $url = null, array $options = array(), string $driver = null): Response
-    {
-        return $this->doRequest('GET', $url, $options, $driver);
-    }
-
-    /**
-     * @param string $method
-     * @param string $url
-     * @param array $options
-     * @param string $driver
-     * @return Response
-     * @throws \Exception
-     */
-    public function doRequest(string $method, string $url, array $options, string $driver = null): Response
+    public function request(array $options, string $driver = null): Response
     {
         try {
-            if (!empty($url)) {
-                $options['base_uri'] = $url;
-                $this->parseOptions($options);
-                $url = $options['base_uri'];
-                unset($options['base_uri']);
-            }
             if ($driver === 'saber' || ($driver = $this->default) === 'saber') {
-                $options = array_merge($options, array_filter([
-                    'method' => $method,
-                    'uri' => $url
-                ]));
                 if (isset($options['auth']) && !isset($options['auth']['username'])) {
                     $options['auth'] = [
                         'username' => $options['auth'][0],
@@ -116,7 +118,13 @@ class Client implements ClientInterface
                 }
                 $response = $this->getDriver($driver)->request($options);
             } elseif ($driver === 'guzzle' || ($driver = $this->default) === 'guzzle') {
-                $response = $this->getDriver($driver)->request($method, $url, $options);
+                $method = ArrayHelper::getOneValue($options, ['method']);
+                $uri = ArrayHelper::getOneValue($options, ['base_uri', 'uri']);
+                $ext = array_filter([
+                    'query' => ArrayHelper::getOneValue($options, ['uri_query', 'query']),
+                    'save_to' => ArrayHelper::getOneValue($options, ['download_dir'])
+                ]);
+                $response = $this->getDriver($driver)->request($method, $url, array_merge($options, $ext));
             } else {
                 throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);
             }
@@ -155,77 +163,5 @@ class Client implements ClientInterface
             return $this->driver[$name];
         }
         throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);;
-    }
-
-    /**
-     * @param string $url
-     * @param array $options
-     * @param string|null $driver
-     * @return Response
-     * @throws \Exception
-     */
-    public function head(string $url, array $options = array(), string $driver = null): Response
-    {
-        return $this->doRequest('HEAD', $url, $options, $driver);
-    }
-
-    /**
-     * @param string $url
-     * @param array $options
-     * @param string|null $driver
-     * @return Response
-     * @throws \Exception
-     */
-    public function delete(string $url, array $options = array(), string $driver = null): Response
-    {
-        return $this->doRequest('DELETE', $url, $options, $driver);
-    }
-
-    /**
-     * @param string $url
-     * @param array $options
-     * @param string|null $driver
-     * @return Response
-     * @throws \Exception
-     */
-    public function put(string $url, array $options = array(), string $driver = null): Response
-    {
-        return $this->doRequest('PUT', $url, $options, $driver);
-    }
-
-    /**
-     * @param string $url
-     * @param array $options
-     * @param string|null $driver
-     * @return Response
-     * @throws \Exception
-     */
-    public function patch(string $url, array $options = array(), string $driver = null): Response
-    {
-        return $this->doRequest('PATCH', $url, $options, $driver);
-    }
-
-    /**
-     * @param string $url
-     * @param array $options
-     * @param string|null $driver
-     * @return Response
-     * @throws \Exception
-     */
-    public function post(string $url, array $options = array(), string $driver = null): Response
-    {
-        return $this->doRequest('POST', $url, $options, $driver);
-    }
-
-    /**
-     * @param string $url
-     * @param array $options
-     * @param string|null $driver
-     * @return Response
-     * @throws \Exception
-     */
-    public function options(string $url, array $options = array(), string $driver = null): Response
-    {
-        return $this->doRequest('OPTIONS', $url, $options, $driver);
     }
 }
