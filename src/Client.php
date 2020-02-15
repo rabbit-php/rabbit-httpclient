@@ -119,11 +119,11 @@ class Client
             } elseif ($driver === 'guzzle') {
                 $method = ArrayHelper::getOneValue($options, ['method']);
                 $uri = ArrayHelper::getOneValue($options, ['uri', 'base_uri']);
-                $ext = array_filter([
+                $ext = [
                     'query' => ArrayHelper::getOneValue($options, ['uri_query', 'query'], null, true),
                     'save_to' => ArrayHelper::getOneValue($options, ['download_dir'], null, true)
-                ]);
-                $response = $this->getDriver($driver)->request($method, $uri, array_merge($options, $ext));
+                ];
+                $response = $this->getDriver($driver)->request($method, $uri, array_filter(array_merge($options, $ext)));
             } else {
                 throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);
             }
