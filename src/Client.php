@@ -107,7 +107,8 @@ class Client
     {
         try {
             $options = array_merge($this->options, $options);
-            if ($driver === 'saber' || ($driver = $this->default) === 'saber') {
+            $driver = $driver ?? $this->default;
+            if ($driver === 'saber') {
                 if (isset($options['auth']) && !isset($options['auth']['username'])) {
                     $options['auth'] = [
                         'username' => $options['auth'][0],
@@ -115,14 +116,14 @@ class Client
                     ];
                 }
                 $response = $this->getDriver($driver)->request($options);
-            } elseif ($driver === 'guzzle' || ($driver = $this->default) === 'guzzle') {
+            } elseif ($driver === 'guzzle') {
                 $method = ArrayHelper::getOneValue($options, ['method']);
                 $uri = ArrayHelper::getOneValue($options, ['uri', 'base_uri']);
                 $ext = array_filter([
                     'query' => ArrayHelper::getOneValue($options, ['uri_query', 'query'], null, true),
                     'save_to' => ArrayHelper::getOneValue($options, ['download_dir'], null, true)
                 ]);
-                $response = $this->getDriver($driver)->request($method, $url, array_merge($options, $ext));
+                $response = $this->getDriver($driver)->request($method, $uri, array_merge($options, $ext));
             } else {
                 throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);
             }
