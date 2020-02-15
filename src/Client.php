@@ -103,7 +103,7 @@ class Client
      * @return Response
      * @throws \Exception
      */
-    public function request(array $options, string $driver = null): Response
+    public function request(array $options = [], string $driver = null): Response
     {
         try {
             $options = array_merge($this->options, $options);
