@@ -128,11 +128,14 @@ class Client
                 throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);
             }
         } catch (\Exception $e) {
-            $message = sprintf('Something went wrong (%s).', $e->getMessage());
-
-            App::error($message, 'http');
-
-            throw new \RuntimeException($message);
+            if (method_exists($e, 'getResponse')) {
+                // 处理saber的response异常
+                $response = $e->getResponse();
+            } else {
+                $message = sprintf('Something went wrong (%s).', $e->getMessage());
+                App::error($message, 'http');
+                throw new \RuntimeException($message);
+            }
         }
 
         if (400 <= $response->getStatusCode()) {
