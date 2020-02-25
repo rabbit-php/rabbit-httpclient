@@ -140,13 +140,13 @@ class Client
                 $response->getReasonPhrase());
 
             App::error($message, 'http');
-
-            $message .= "\n" . (string)$response->getBody();
+            $body = (string)$response->getBody();
+            $message .= "\n" . $body;
             if (500 <= $response->getStatusCode()) {
-                throw new \RuntimeException($message, $response->getStatusCode());
+                throw new \RuntimeException($body, $response->getStatusCode());
             }
 
-            throw new \RuntimeException($message, $response->getStatusCode());
+            throw new \RuntimeException($body, $response->getStatusCode());
         }
 
         return new Response($response);
