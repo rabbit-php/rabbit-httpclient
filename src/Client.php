@@ -91,9 +91,9 @@ class Client
         $uri = $args[0];
         $opts = isset($args[1]) ? $args[1] : [];
         $driver = isset($args[2]) ? $args[2] : null;
-        return $this->request(array_merge($options, [
+        return $this->request(array_merge($opts, [
             'method' => $name,
-            'uri' => $url
+            'uri' => $uri
         ]), $driver);
     }
 
@@ -161,6 +161,6 @@ class Client
         if (isset($this->driver[$name])) {
             return $this->driver[$name];
         }
-        throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);;
+        throw new NotSupportedException('Not support the httpclient driver ' . $name);
     }
 }
