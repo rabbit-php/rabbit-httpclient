@@ -78,11 +78,11 @@ class Client
 
     /**
      * @param $name
-     * @param $arguments
+     * @param $args
      * @return Response
      * @throws \Exception
      */
-    public function __call($name, $arguments)
+    public function __call($name, $args)
     {
         if (count($args) < 1) {
             throw new \InvalidArgumentException('Magic request methods require a URI and optional options array');
