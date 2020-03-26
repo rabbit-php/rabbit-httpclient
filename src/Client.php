@@ -34,7 +34,7 @@ class Client
      * @param string $default
      * @param array $driver
      */
-    public function __construct(array $options = array(), string $default = 'saber', array $driver = [])
+    public function __construct(array $options = array(), string $default = 'saber', bool $session = false, array $driver = [])
     {
         $this->options = $options;
         $this->parseOptions();
@@ -46,7 +46,7 @@ class Client
                     'password' => $this->options['auth'][1]
                 ];
             }
-            $this->driver['saber'] = Saber::create($this->options);
+            $this->driver['saber'] = $session ? Saber::session($this->options) : Saber::create($this->options);
         } else {
             $this->driver = $driver;
         }
