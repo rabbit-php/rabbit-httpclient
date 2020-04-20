@@ -34,7 +34,7 @@ class Client
      * @param string $default
      * @param array $driver
      */
-    public function __construct(array $options = array(), string $default = 'saber', bool $session = false, array $driver = [])
+    public function __construct(array $options = array(), string $default = 'saber', bool $session = true, array $driver = [])
     {
         $this->options = $options;
         $this->parseOptions();
