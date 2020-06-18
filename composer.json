@@ -3,7 +3,7 @@
   "description": "rabbit httpclient",
   "type": "library",
   "require": {
-    "rabbit/framework": "dev-master",
+    "rabbit/framework": "^1.0",
     "swlib/saber": "^1.0",
     "guzzlehttp/guzzle": "^6.0"
   },
