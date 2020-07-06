@@ -1,9 +1,11 @@
 <?php
+declare(strict_types=1);
+
+namespace Rabbit\HttpClient;
 
 
-namespace rabbit\httpclient;
-
-
+use DOMDocument;
+use DOMXPath;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 use Swlib\Util\DataParser;
@@ -15,7 +17,7 @@ use Swlib\Util\DataParser;
 class Response implements ResponseInterface
 {
     /** @var ResponseInterface */
-    private $response;
+    private ResponseInterface $response;
 
     /**
      * Response constructor.
@@ -202,22 +204,22 @@ class Response implements ResponseInterface
     }
 
     /**
-     * @return \DOMDocument
+     * @return DOMDocument
      */
-    public function domObject(): \DOMDocument
+    public function domObject(): DOMDocument
     {
         $data = (string)$this->response->getBody();
         return DataParser::stringToDomObject($data);
     }
 
     /**
-     * @return \DOMXPath
+     * @return DOMXPath
      */
-    public function xpathObject(): \DOMXPath
+    public function xpathObject(): DOMXPath
     {
         $data = (string)$this->response->getBody();
         $dom = DataParser::stringToDomObject($data);
         $dom->normalize();
-        return new \DOMXPath($dom);
+        return new DOMXPath($dom);
     }
 }

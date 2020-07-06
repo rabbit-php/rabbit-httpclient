@@ -1,12 +1,14 @@
 <?php
+declare(strict_types=1);
 
-namespace rabbit\httpclient;
+namespace Rabbit\HttpClient;
 
-use rabbit\App;
-use rabbit\exception\NotSupportedException;
-use rabbit\helper\ArrayHelper;
-use rabbit\helper\UrlHelper;
+use Rabbit\Base\App;
+use Rabbit\Base\Exception\NotSupportedException;
+use Rabbit\Base\Helper\ArrayHelper;
+use Rabbit\Base\Helper\UrlHelper;
 use Swlib\Saber;
+use Throwable;
 
 /**
  * Class Client
@@ -22,11 +24,11 @@ use Swlib\Saber;
 class Client
 {
     /** @var array */
-    protected $driver = [];
+    protected array $driver = [];
     /** @var string */
-    private $default;
+    private string $default;
     /** @var array */
-    protected $options = [];
+    protected array $options = [];
 
     /**
      * Client constructor.
@@ -59,9 +61,7 @@ class Client
     }
 
     /**
-     * @param array $options
-     * @param string $driver
-     * @return array
+     * @return void
      */
     private function parseOptions(): void
     {
@@ -72,7 +72,7 @@ class Client
         $parsed = parse_url($uri);
         $user = isset($parsed['user']) ? $parsed['user'] : '';
         $pass = isset($parsed['pass']) ? $parsed['pass'] : '';
-        $this->options['base_uri'] = UrlHelper::unparse_url($parsed, false);
+        $this->options['base_uri'] = UrlHelper::unParseUrl($parsed, false);
         if (!empty($parsed['user'])) {
             $this->options['auth'] = [
                 $user,
@@ -85,7 +85,7 @@ class Client
      * @param $name
      * @param $args
      * @return Response
-     * @throws \Exception
+     * @throws Throwable
      */
     public function __call($name, $args)
     {
@@ -106,7 +106,7 @@ class Client
      * @param array $options
      * @param string|null $driver
      * @return Response
-     * @throws \Exception
+     * @throws Throwable
      */
     public function request(array $options = [], string $driver = null): Response
     {
@@ -132,7 +132,7 @@ class Client
             } else {
                 throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             if (!method_exists($e, 'getResponse') || (null === $response = $e->getResponse())) {
                 $message = sprintf('Something went wrong (%s).', $e->getMessage());
                 App::error($message, 'http');
@@ -160,6 +160,7 @@ class Client
     /**
      * @param string $name
      * @return mixed
+     * @throws NotSupportedException
      */
     public function getDriver(string $name)
     {
