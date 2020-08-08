@@ -12,7 +12,7 @@ use Swlib\Util\DataParser;
 
 /**
  * Class Response
- * @package rabbit\httpclient
+ * @package Rabbit\HttpClient
  */
 class Response implements ResponseInterface
 {
@@ -26,6 +26,22 @@ class Response implements ResponseInterface
     public function __construct(ResponseInterface $response)
     {
         $this->response = $response;
+    }
+
+    /**
+     * @param $name
+     * @return mixed
+     */
+    public function __get($name)
+    {
+        $getter = 'get' . $name;
+        if (method_exists($this->response, $getter)) {
+            return $this->response->$getter();
+        }
+        if (isset($this->response->$name)) {
+            return $this->response->$name;
+        }
+        return null;
     }
 
     /**
