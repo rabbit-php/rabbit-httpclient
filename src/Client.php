@@ -1,8 +1,11 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Rabbit\HttpClient;
 
+use GuzzleHttp\Handler\StreamHandler;
+use GuzzleHttp\HandlerStack;
 use Rabbit\Base\App;
 use Rabbit\Base\Exception\NotSupportedException;
 use Rabbit\Base\Helper\ArrayHelper;
@@ -13,68 +16,70 @@ use Throwable;
 /**
  * Class Client
  * @package rabbit\consul
- * @method Response get(string $url = null, array $options = array(), string $driver = 'saber'): Response
- * @method Response head(string $url = null, array $options = array(), string $driver = 'saber'): Response
- * @method Response put(string $url = null, array $options = array(), string $driver = 'saber'): Response
- * @method Response post(string $url = null, array $options = array(), string $driver = 'saber'): Response
- * @method Response patch(string $url = null, array $options = array(), string $driver = 'saber'): Response
- * @method Response delete(string $url = null, array $options = array(), string $driver = 'saber'): Response
- * @method Response options(string $url, array $options = array(), string $driver = 'saber') : Response
+ * @method Response get(string $url = null, array $configs = array(), string $driver = 'saber'): Response
+ * @method Response head(string $url = null, array $configs = array(), string $driver = 'saber'): Response
+ * @method Response put(string $url = null, array $configs = array(), string $driver = 'saber'): Response
+ * @method Response post(string $url = null, array $configs = array(), string $driver = 'saber'): Response
+ * @method Response patch(string $url = null, array $configs = array(), string $driver = 'saber'): Response
+ * @method Response delete(string $url = null, array $configs = array(), string $driver = 'saber'): Response
+ * @method Response options(string $url, array $configs = array(), string $driver = 'saber') : Response
  */
 class Client
 {
-    /** @var array */
-    protected array $driver = [];
+    protected $driver;
     /** @var string */
     private string $default;
     /** @var array */
-    protected array $options = [];
+    protected array $configs = [];
 
     /**
      * Client constructor.
-     * @param array $options
+     * @param array $configs
      * @param string $default
      * @param array $driver
      */
-    public function __construct(array $options = array(), string $default = 'saber', bool $session = false, array $driver = [])
+    public function __construct(array $configs = array(), string $default = 'guzzle', bool $session = false)
     {
-        $this->options = $options;
-        $this->parseOptions();
-        if (empty($driver)) {
-            $this->driver['guzzle'] = new \GuzzleHttp\Client($this->options);
-            if (isset($this->options['auth']) && !isset($options['auth']['username'])) {
-                $this->options['auth'] = [
-                    'username' => $this->options['auth'][0],
-                    'password' => $this->options['auth'][1]
-                ];
-            }
-            if ($session) {
-                $this->driver['saber'] = Saber::session($this->options);
-                gc_collect_cycles();
-            } else {
-                $this->driver['saber'] = Saber::create($this->options);
-            }
-        } else {
-            $this->driver = $driver;
+        $this->parseConfigs();
+        switch ($default) {
+            case 'guzzle':
+                $this->driver = new \GuzzleHttp\Client(array_merge($configs, ['handler' => HandlerStack::create(create(StreamHandler::class))]));
+                break;
+            case 'saber':
+                if (isset($configs['auth']) && !isset($configs['auth']['username'])) {
+                    $configs['auth'] = [
+                        'username' => $configs['auth'][0],
+                        'password' => $configs['auth'][1]
+                    ];
+                }
+                if ($session) {
+                    $this->driver = Saber::session($configs);
+                    gc_collect_cycles();
+                } else {
+                    $this->driver = Saber::create($configs);
+                }
+            default:
+                throw new NotSupportedException('Not support the httpclient driver ' . $default);
         }
         $this->default = $default;
+        $this->configs = $configs;
     }
 
     /**
      * @return void
      */
-    private function parseOptions(): void
+    private function parseConfigs(): void
     {
-        if (null === ($uri = ArrayHelper::getOneValue($this->options, ['uri', 'base_uri'])) || isset($this->options['auth'])) {
+        if (null === ($uri = ArrayHelper::getOneValue($this->configs, ['uri', 'base_uri'])) || isset($this->configs['auth'])) {
             return;
         }
 
         $parsed = parse_url($uri);
         $user = isset($parsed['user']) ? $parsed['user'] : '';
         $pass = isset($parsed['pass']) ? $parsed['pass'] : '';
-        $this->options['base_uri'] = UrlHelper::unParseUrl($parsed, false);
+        $this->configs['base_uri'] = UrlHelper::unParseUrl($parsed, false);
         if (!empty($parsed['user'])) {
-            $this->options['auth'] = [
+            $this->configs['auth'] = [
                 $user,
                 $pass
             ];
@@ -103,32 +108,32 @@ class Client
     }
 
     /**
-     * @param array $options
+     * @param array $configs
      * @param string|null $driver
      * @return Response
      * @throws Throwable
      */
-    public function request(array $options = [], string $driver = null): Response
+    public function request(array $configs = []): Response
     {
         try {
-            $options = array_merge($this->options, $options);
+            $configs = array_merge($this->configs, $configs);
             $driver = $driver ?? $this->default;
             if ($driver === 'saber') {
-                if (isset($options['auth']) && !isset($options['auth']['username'])) {
-                    $options['auth'] = [
-                        'username' => $options['auth'][0],
-                        'password' => $options['auth'][1]
+                if (isset($configs['auth']) && !isset($configs['auth']['username'])) {
+                    $configs['auth'] = [
+                        'username' => $configs['auth'][0],
+                        'password' => $configs['auth'][1]
                     ];
                 }
-                $response = $this->getDriver($driver)->request($options);
+                $response = $this->driver->request($configs);
             } elseif ($driver === 'guzzle') {
-                $method = ArrayHelper::getOneValue($options, ['method']);
-                $uri = ArrayHelper::getOneValue($options, ['uri', 'base_uri']);
+                $method = ArrayHelper::getOneValue($configs, ['method']);
+                $uri = ArrayHelper::getOneValue($configs, ['uri', 'base_uri']);
                 $ext = [
-                    'query' => ArrayHelper::getOneValue($options, ['uri_query', 'query'], null, true),
-                    'save_to' => ArrayHelper::getOneValue($options, ['download_dir'], null, true)
+                    'query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true),
+                    'save_to' => ArrayHelper::getOneValue($configs, ['download_dir'], null, true)
                 ];
-                $response = $this->getDriver($driver)->request($method, $uri, array_filter(array_merge($options, $ext)));
+                $response = $this->driver->request($method, $uri, array_filter(array_merge($configs, $ext)));
             } else {
                 throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);
             }
@@ -141,8 +146,11 @@ class Client
         }
 
         if (400 <= $response->getStatusCode()) {
-            $message = sprintf('Something went wrong (%s - %s).', $response->getStatusCode(),
-                $response->getReasonPhrase());
+            $message = sprintf(
+                'Something went wrong (%s - %s).',
+                $response->getStatusCode(),
+                $response->getReasonPhrase()
+            );
 
             App::error($message, 'http');
             $body = (string)$response->getBody();
@@ -155,18 +163,5 @@ class Client
         }
 
         return new Response($response);
-    }
-
-    /**
-     * @param string $name
-     * @return mixed
-     * @throws NotSupportedException
-     */
-    public function getDriver(string $name)
-    {
-        if (isset($this->driver[$name])) {
-            return $this->driver[$name];
-        }
-        throw new NotSupportedException('Not support the httpclient driver ' . $name);
     }
 }
