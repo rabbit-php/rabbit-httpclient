@@ -43,7 +43,8 @@ class Client
         $this->parseConfigs();
         switch ($default) {
             case 'guzzle':
-                $this->driver = new \GuzzleHttp\Client(array_merge($configs, ['handler' => HandlerStack::create(create(StreamHandler::class))]));
+                $configs = array_merge($configs, ['handler' => HandlerStack::create(create(StreamHandler::class))]);
+                $this->driver = new \GuzzleHttp\Client($configs);
                 break;
             case 'saber':
                 if (isset($configs['auth']) && !isset($configs['auth']['username'])) {
