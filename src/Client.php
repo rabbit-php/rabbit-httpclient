@@ -59,6 +59,7 @@ class Client
                 } else {
                     $this->driver = Saber::create($configs);
                 }
+                break;
             default:
                 throw new NotSupportedException('Not support the httpclient driver ' . $default);
         }
