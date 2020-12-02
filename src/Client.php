@@ -38,7 +38,7 @@ class Client
      * @param string $default
      * @param array $driver
      */
-    public function __construct(array $configs = array(), string $default = 'guzzle', bool $session = false)
+    public function __construct(array $configs = array(), string $default = 'saber', bool $session = false)
     {
         $this->parseConfigs();
         switch ($default) {
