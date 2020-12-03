@@ -127,6 +127,9 @@ class Client
                         'password' => $configs['auth'][1]
                     ];
                 }
+                if (isset($configs['proxy']) && is_array($configs['proxy'])) {
+                    $configs['proxy'] = reset(array_values($configs['proxy']));
+                }
                 $response = $this->driver->request($configs);
             } elseif ($driver === 'guzzle') {
                 $method = ArrayHelper::getOneValue($configs, ['method']);
