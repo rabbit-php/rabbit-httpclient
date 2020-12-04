@@ -6,6 +6,7 @@ namespace Rabbit\HttpClient;
 
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
 use Rabbit\Base\App;
 use Rabbit\Base\Exception\NotSupportedException;
 use Rabbit\Base\Helper\ArrayHelper;
@@ -38,12 +39,11 @@ class Client
      * @param string $default
      * @param array $driver
      */
-    public function __construct(array $configs = array(), string $default = 'saber', bool $session = false)
+    public function __construct(array $configs = [], string $default = 'guzzle', bool $session = false)
     {
         $this->parseConfigs();
         switch ($default) {
             case 'guzzle':
-                $configs = array_merge($configs, ['handler' => HandlerStack::create(create(StreamHandler::class))]);
                 $this->driver = new \GuzzleHttp\Client($configs);
                 break;
             case 'saber':
@@ -130,14 +130,25 @@ class Client
                 if (isset($configs['proxy']) && is_array($configs['proxy'])) {
                     $configs['proxy'] = reset(array_values($configs['proxy']));
                 }
-                $response = $this->driver->request($configs);
+                $response = $this->driver->request($configs += ['uri_query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true)]);
             } elseif ($driver === 'guzzle') {
                 $method = ArrayHelper::getOneValue($configs, ['method']);
                 $uri = ArrayHelper::getOneValue($configs, ['uri', 'base_uri']);
                 $ext = [
                     'query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true),
-                    'save_to' => ArrayHelper::getOneValue($configs, ['download_dir'], null, true)
+                    'save_to' => ArrayHelper::getOneValue($configs, ['download_dir'], null, true),
                 ];
+                $handle = HandlerStack::create(create(StreamHandler::class));
+                if (null !== $before = ArrayHelper::getOneValue($configs, ['before'], null, true)) {
+                    if (is_array($before)) {
+                        foreach ($before as $middleware) {
+                            $handle->push(Middleware::mapRequest($middleware));
+                        }
+                    } else {
+                        $handle->push(Middleware::mapRequest($before));
+                    }
+                }
+                $ext['handler'] = $handle;
                 $response = $this->driver->request($method, $uri, array_filter(array_merge($configs, $ext)));
             } else {
                 throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);
