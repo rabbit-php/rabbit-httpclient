@@ -157,7 +157,7 @@ class Client
             if (!method_exists($e, 'getResponse') || (null === $response = $e->getResponse())) {
                 $message = sprintf('Something went wrong (%s).', $e->getMessage());
                 App::error($message, 'http');
-                throw new \RuntimeException($message);
+                throw new \RuntimeException($message, 500);
             }
         }
 
@@ -171,10 +171,6 @@ class Client
             App::error($message, 'http');
             $body = (string)$response->getBody();
             $message .= "\n" . $body;
-            if (500 <= $response->getStatusCode()) {
-                throw new \RuntimeException($body, $response->getStatusCode());
-            }
-
             throw new \RuntimeException($body, $response->getStatusCode());
         }
 
