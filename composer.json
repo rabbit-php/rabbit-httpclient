@@ -4,7 +4,7 @@
   "type": "library",
   "require": {
     "rabbit/base": "dev-master",
-    "swlib/saber": "^1.0",
+    "guzzlehttp/guzzle": "^7.0",
     "ext-json": "*",
     "ext-simplexml": "*",
     "ext-libxml": "*",
