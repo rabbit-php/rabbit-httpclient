@@ -7,10 +7,10 @@ namespace Rabbit\HttpClient;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
-use Rabbit\Base\App;
 use Rabbit\Base\Exception\NotSupportedException;
 use Rabbit\Base\Helper\ArrayHelper;
 use Rabbit\Base\Helper\UrlHelper;
+use RuntimeException;
 use Swlib\Saber;
 use Throwable;
 
@@ -156,8 +156,7 @@ class Client
         } catch (Throwable $e) {
             if (!method_exists($e, 'getResponse') || (null === $response = $e->getResponse())) {
                 $message = sprintf('Something went wrong (%s).', $e->getMessage());
-                App::error($message, 'http');
-                throw new \RuntimeException($message, 500);
+                throw new RuntimeException($message, 500);
             }
         }
 
@@ -167,11 +166,9 @@ class Client
                 $response->getStatusCode(),
                 $response->getReasonPhrase()
             );
-
-            App::error($message, 'http');
             $body = (string)$response->getBody();
             $message .= "\n" . $body;
-            throw new \RuntimeException($body, $response->getStatusCode());
+            throw new RuntimeException($body, $response->getStatusCode());
         }
 
         return new Response($response);
