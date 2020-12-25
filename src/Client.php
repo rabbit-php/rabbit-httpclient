@@ -44,7 +44,8 @@ class Client
         $this->parseConfigs();
         switch ($default) {
             case 'guzzle':
-                $this->driver = new \GuzzleHttp\Client($configs);
+                $handle = HandlerStack::create(create(StreamHandler::class));
+                $this->driver = new \GuzzleHttp\Client(array_merge($configs, ['handler' => $handle]));
                 break;
             case 'saber':
                 if (isset($configs['auth']) && !isset($configs['auth']['username'])) {
@@ -65,6 +66,11 @@ class Client
         }
         $this->default = $default;
         $this->configs = $configs;
+    }
+
+    public function getDriver()
+    {
+        return $this->driver;
     }
 
     /**
@@ -138,7 +144,7 @@ class Client
                     'query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true),
                     'save_to' => ArrayHelper::getOneValue($configs, ['download_dir'], null, true),
                 ];
-                $handle = HandlerStack::create(create(StreamHandler::class));
+                $handle = $this->driver->getConfig('handler');
                 if (null !== $before = ArrayHelper::getOneValue($configs, ['before'], null, true)) {
                     if (is_array($before)) {
                         foreach ($before as $middleware) {
@@ -148,7 +154,6 @@ class Client
                         $handle->push(Middleware::mapRequest($before));
                     }
                 }
-                $ext['handler'] = $handle;
                 $response = $this->driver->request($method, $uri, array_filter(array_merge($configs, $ext)));
             } else {
                 throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);
