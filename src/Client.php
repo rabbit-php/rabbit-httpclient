@@ -134,7 +134,8 @@ class Client
                     ];
                 }
                 if (isset($configs['proxy']) && is_array($configs['proxy'])) {
-                    $configs['proxy'] = reset(array_values($configs['proxy']));
+                    $proxy = array_values($configs['proxy']);
+                    $configs['proxy'] = reset($proxy);
                 }
                 $response = $this->driver->request($configs += ['uri_query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true)]);
             } elseif ($driver === 'guzzle') {
