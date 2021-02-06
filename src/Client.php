@@ -48,12 +48,6 @@ class Client
                 $this->driver = new \GuzzleHttp\Client(array_merge($configs, ['handler' => $handle]));
                 break;
             case 'saber':
-                if (isset($configs['auth']) && !isset($configs['auth']['username'])) {
-                    $configs['auth'] = [
-                        'username' => $configs['auth'][0],
-                        'password' => $configs['auth'][1]
-                    ];
-                }
                 if ($session) {
                     $this->driver = Saber::session($configs);
                     gc_collect_cycles();
@@ -128,14 +122,10 @@ class Client
             $driver = $driver ?? $this->default;
             if ($driver === 'saber') {
                 if (isset($configs['auth']) && !isset($configs['auth']['username'])) {
-                    $configs['auth'] = [
-                        'username' => $configs['auth'][0],
-                        'password' => $configs['auth'][1]
-                    ];
+                    [$configs['auth']['username'], $configs['auth']['password']] = ArrayHelper::remove($configs, 'auth');
                 }
                 if (isset($configs['proxy']) && is_array($configs['proxy'])) {
-                    $proxy = array_values($configs['proxy']);
-                    $configs['proxy'] = reset($proxy);
+                    $configs['proxy'] = current(array_values($configs['proxy']));
                 }
                 $response = $this->driver->request($configs += ['uri_query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true)]);
             } elseif ($driver === 'guzzle') {
