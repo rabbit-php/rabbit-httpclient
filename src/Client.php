@@ -39,13 +39,12 @@ class Client
      * @param string $default
      * @param array $driver
      */
-    public function __construct(array $configs = [], string $default = 'guzzle', bool $session = false)
+    public function __construct(array $configs = [], string $default = 'saber', bool $session = false)
     {
         $this->parseConfigs();
         switch ($default) {
             case 'guzzle':
-                $handle = HandlerStack::create(create(StreamHandler::class));
-                $this->driver = new \GuzzleHttp\Client(array_merge($configs, ['handler' => $handle]));
+                $this->driver = new \GuzzleHttp\Client($configs);
                 break;
             case 'saber':
                 if ($session) {
