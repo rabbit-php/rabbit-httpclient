@@ -146,7 +146,7 @@ class Client
                         $handle->push(Middleware::mapRequest($before));
                     }
                 }
-                $response = $this->driver->request($method, $uri, array_filter(array_merge($configs, $ext)));
+                $response = $this->getDriver()->request($method, $uri, array_filter(array_merge($configs, $ext)));
             } else {
                 throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);
             }
