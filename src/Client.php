@@ -128,13 +128,17 @@ class Client
                 if (isset($configs['proxy']) && is_array($configs['proxy'])) {
                     $configs['proxy'] = current(array_values($configs['proxy']));
                 }
-                $response = $this->getDriver()->request($configs += ['uri_query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true)]);
+                $response = $this->getDriver()->request($configs += [
+                    'uri_query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true),
+                    'data' => ArrayHelper::getOneValue($configs, ['data', 'body'], null, true)
+                ]);
             } elseif ($driver === 'guzzle') {
                 $method = ArrayHelper::getOneValue($configs, ['method']);
                 $uri = ArrayHelper::getOneValue($configs, ['uri', 'base_uri']);
                 $ext = [
                     'query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true),
                     'save_to' => ArrayHelper::getOneValue($configs, ['download_dir'], null, true),
+                    'body' => ArrayHelper::getOneValue($configs, ['data', 'body'], null, true)
                 ];
                 $handle = $this->getDriver()->getConfig('handler');
                 if (null !== $before = ArrayHelper::getOneValue($configs, ['before'], null, true)) {
