@@ -27,11 +27,12 @@ use Throwable;
  */
 class Client
 {
-    protected $driver;
     /** @var string */
     private string $default;
     /** @var array */
     protected array $configs = [];
+
+    protected bool $session;
 
     /**
      * Client constructor.
@@ -42,28 +43,29 @@ class Client
     public function __construct(array $configs = [], string $default = 'saber', bool $session = false)
     {
         $this->parseConfigs();
-        switch ($default) {
-            case 'guzzle':
-                $this->driver = new \GuzzleHttp\Client($configs);
-                break;
-            case 'saber':
-                if ($session) {
-                    $this->driver = Saber::session($configs);
-                    gc_collect_cycles();
-                } else {
-                    $this->driver = Saber::create($configs);
-                }
-                break;
-            default:
-                throw new NotSupportedException('Not support the httpclient driver ' . $default);
-        }
         $this->default = $default;
         $this->configs = $configs;
+        $this->session = $session;
     }
 
     public function getDriver()
     {
-        return $this->driver;
+        switch ($this->default) {
+            case 'guzzle':
+                $driver = new \GuzzleHttp\Client($this->configs);
+                break;
+            case 'saber':
+                if ($this->session) {
+                    $driver = Saber::session($this->configs);
+                    gc_collect_cycles();
+                } else {
+                    $driver = Saber::create($this->configs);
+                }
+                break;
+            default:
+                throw new NotSupportedException('Not support the httpclient driver ' . $this->default);
+        };
+        return $driver;
     }
 
     /**
@@ -114,7 +116,7 @@ class Client
      * @return Response
      * @throws Throwable
      */
-    public function request(array $configs = []): Response
+    public function request(array $configs = [], string $driver = null): Response
     {
         try {
             $configs = array_merge($this->configs, $configs);
@@ -126,7 +128,7 @@ class Client
                 if (isset($configs['proxy']) && is_array($configs['proxy'])) {
                     $configs['proxy'] = current(array_values($configs['proxy']));
                 }
-                $response = $this->driver->request($configs += ['uri_query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true)]);
+                $response = $this->getDriver()->request($configs += ['uri_query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true)]);
             } elseif ($driver === 'guzzle') {
                 $method = ArrayHelper::getOneValue($configs, ['method']);
                 $uri = ArrayHelper::getOneValue($configs, ['uri', 'base_uri']);
@@ -134,7 +136,7 @@ class Client
                     'query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true),
                     'save_to' => ArrayHelper::getOneValue($configs, ['download_dir'], null, true),
                 ];
-                $handle = $this->driver->getConfig('handler');
+                $handle = $this->getDriver()->getConfig('handler');
                 if (null !== $before = ArrayHelper::getOneValue($configs, ['before'], null, true)) {
                     if (is_array($before)) {
                         foreach ($before as $middleware) {
