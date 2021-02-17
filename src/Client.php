@@ -141,14 +141,14 @@ class Client
                     'save_to' => ArrayHelper::getOneValue($configs, ['download_dir'], null, true),
                     'body' => ArrayHelper::getOneValue($configs, ['data', 'body'], null, true)
                 ];
-                $handle = HandlerStack::create();
+                $handler = HandlerStack::create(create(StreamHandler::class));
                 if (null !== $before = ArrayHelper::getOneValue($configs, ['before'], null, true)) {
                     $before = (array)$before;
                     foreach ($before as $middleware) {
-                        $handle->push(Middleware::mapRequest($middleware));
+                        $handler->push(Middleware::mapRequest($middleware));
                     }
                 }
-                $response = (new \GuzzleHttp\Client())->request($method, $uri, array_filter(array_merge($configs, $ext)));
+                $response = (new \GuzzleHttp\Client(['handler' => $handler]))->request($method, $uri, array_filter(array_merge($configs, $ext)));
             } else {
                 throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);
             }
