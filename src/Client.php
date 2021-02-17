@@ -12,6 +12,7 @@ use Rabbit\Base\Helper\ArrayHelper;
 use Rabbit\Base\Helper\UrlHelper;
 use RuntimeException;
 use Swlib\Saber;
+use Swlib\SaberGM;
 use Throwable;
 
 /**
@@ -128,7 +129,7 @@ class Client
                 if (isset($configs['proxy']) && is_array($configs['proxy'])) {
                     $configs['proxy'] = current(array_values($configs['proxy']));
                 }
-                $response = $this->getDriver()->request($configs += [
+                $response = SaberGM::request($configs += [
                     'uri_query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true),
                     'data' => ArrayHelper::getOneValue($configs, ['data', 'body'], null, true)
                 ]);
@@ -140,17 +141,14 @@ class Client
                     'save_to' => ArrayHelper::getOneValue($configs, ['download_dir'], null, true),
                     'body' => ArrayHelper::getOneValue($configs, ['data', 'body'], null, true)
                 ];
-                $handle = $this->getDriver()->getConfig('handler');
+                $handle = HandlerStack::create();
                 if (null !== $before = ArrayHelper::getOneValue($configs, ['before'], null, true)) {
-                    if (is_array($before)) {
-                        foreach ($before as $middleware) {
-                            $handle->push(Middleware::mapRequest($middleware));
-                        }
-                    } else {
-                        $handle->push(Middleware::mapRequest($before));
+                    $before = (array)$before;
+                    foreach ($before as $middleware) {
+                        $handle->push(Middleware::mapRequest($middleware));
                     }
                 }
-                $response = $this->getDriver()->request($method, $uri, array_filter(array_merge($configs, $ext)));
+                $response = (new \GuzzleHttp\Client())->request($method, $uri, array_filter(array_merge($configs, $ext)));
             } else {
                 throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);
             }
