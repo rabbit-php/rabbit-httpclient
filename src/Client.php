@@ -49,11 +49,13 @@ class Client
         $this->session = $session;
     }
 
-    public function getDriver()
+    public function getDriver(string $default = null)
     {
-        switch ($this->default) {
+        $default ??= $this->default;
+        switch ($default) {
             case 'guzzle':
-                $driver = new \GuzzleHttp\Client($this->configs);
+                $handler = HandlerStack::create(create(StreamHandler::class));
+                $driver = new \GuzzleHttp\Client($this->configs += ['handler' => $handler]);
                 break;
             case 'saber':
                 if ($this->session) {
@@ -129,7 +131,7 @@ class Client
                 if (isset($configs['proxy']) && is_array($configs['proxy'])) {
                     $configs['proxy'] = current(array_values($configs['proxy']));
                 }
-                $response = SaberGM::request($configs += [
+                $response = $this->getDriver($driver)->request($configs += [
                     'uri_query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true),
                     'data' => ArrayHelper::getOneValue($configs, ['data', 'body'], null, true)
                 ]);
@@ -141,14 +143,15 @@ class Client
                     'save_to' => ArrayHelper::getOneValue($configs, ['download_dir'], null, true),
                     'body' => ArrayHelper::getOneValue($configs, ['data', 'body'], null, true)
                 ];
-                $handler = HandlerStack::create(create(StreamHandler::class));
+                $client = $this->getDriver($driver);
                 if (null !== $before = ArrayHelper::getOneValue($configs, ['before'], null, true)) {
+                    $handler = $client->getConfig('handler');
                     $before = (array)$before;
                     foreach ($before as $middleware) {
                         $handler->push(Middleware::mapRequest($middleware));
                     }
                 }
-                $response = (new \GuzzleHttp\Client(['handler' => $handler]))->request($method, $uri, array_filter(array_merge($configs, $ext)));
+                $response = $client->request($method, $uri, array_filter(array_merge($configs, $ext)));
             } else {
                 throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);
             }
