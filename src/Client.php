@@ -44,7 +44,7 @@ class Client
     public function __construct(array $configs = [], string $default = 'saber', bool $session = false)
     {
         $this->parseConfigs();
-        $this->default = $default;
+        $this->default = getDI('http.driver', false) ?? $default;
         $this->configs = $configs;
         $this->session = $session;
     }
