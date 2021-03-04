@@ -169,7 +169,7 @@ class Client
                 $response->getReasonPhrase()
             );
             $body = (string)$response->getBody();
-            $message .= "\n" . $body;
+            $message .= (strlen($body) < 256 ? $body : '');
             throw new RuntimeException($body, $response->getStatusCode());
         }
 
