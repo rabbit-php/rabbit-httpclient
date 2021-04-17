@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Rabbit\HttpClient;
@@ -19,13 +20,16 @@ class Response implements ResponseInterface
     /** @var ResponseInterface */
     private ResponseInterface $response;
 
+    private int $duration;
+
     /**
      * Response constructor.
      * @param ResponseInterface $response
      */
-    public function __construct(ResponseInterface $response)
+    public function __construct(ResponseInterface $response, int $duration)
     {
         $this->response = $response;
+        $this->duration = $duration;
     }
 
     /**
@@ -237,5 +241,10 @@ class Response implements ResponseInterface
         $dom = DataParser::stringToDomObject($data);
         $dom->normalize();
         return new DOMXPath($dom);
+    }
+
+    public function getDurations(): int
+    {
+        return $this->duration;
     }
 }

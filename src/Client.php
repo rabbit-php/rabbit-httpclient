@@ -124,6 +124,7 @@ class Client
         try {
             $configs = array_merge($this->configs, $configs);
             $driver = $driver ?? $this->default;
+            $duration = -1;
             if ($driver === 'saber') {
                 if (isset($configs['auth']) && !isset($configs['auth']['username'])) {
                     [$configs['auth']['username'], $configs['auth']['password']] = ArrayHelper::remove($configs, 'auth');
@@ -135,6 +136,7 @@ class Client
                     'uri_query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true),
                     'data' => ArrayHelper::getOneValue($configs, ['data', 'body'], null, true)
                 ]);
+                $duration = (int)($response->getTime() * 1000);
             } elseif ($driver === 'guzzle') {
                 $method = ArrayHelper::getOneValue($configs, ['method']);
                 $uri = ArrayHelper::getOneValue($configs, ['uri', 'base_uri']);
@@ -151,7 +153,9 @@ class Client
                         $handler->push(Middleware::mapRequest($middleware));
                     }
                 }
+                $start = microtime(true) * 1000;
                 $response = $client->request($method, $uri, array_filter(array_merge($configs, $ext)));
+                $duration = (int)(microtime(true) * 1000 - $start);
             } else {
                 throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);
             }
@@ -173,6 +177,6 @@ class Client
             throw new RuntimeException($body, $response->getStatusCode());
         }
 
-        return new Response($response);
+        return new Response($response, $duration);
     }
 }
