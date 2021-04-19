@@ -243,7 +243,7 @@ class Response implements ResponseInterface
         return new DOMXPath($dom);
     }
 
-    public function getDurations(): int
+    public function getDuration(): int
     {
         return $this->duration;
     }
