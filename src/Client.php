@@ -186,8 +186,9 @@ class Client
             );
             $body = (string)$response->getBody();
             $message .= (strlen($body) < 256 ? $body : '');
+            $statusCode = $response->getStatusCode();
             unset($response);
-            throw new RuntimeException($body, $response->getStatusCode());
+            throw new RuntimeException($body, $statusCode);
         }
 
         return new Response($response, $duration);
