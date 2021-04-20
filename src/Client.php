@@ -139,7 +139,7 @@ class Client
                     'data' => ArrayHelper::getOneValue($configs, ['data', 'body'], null, true)
                 ]);
                 $duration = (int)($response->getTime() * 1000);
-            } elseif ($driver === 'guzzle' || $driver === 'stream') {
+            } elseif ($driver === 'guzzle' || $driver === 'curl') {
                 $method = ArrayHelper::getOneValue($configs, ['method']);
                 $uri = ArrayHelper::getOneValue($configs, ['uri', 'base_uri']);
                 $ext = [
