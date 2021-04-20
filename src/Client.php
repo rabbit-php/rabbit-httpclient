@@ -50,6 +50,7 @@ class Client
 
     public function getDriver(string $default = null)
     {
+        gc_collect_cycles();
         $default ??= $this->default;
         switch ($default) {
             case 'curl':
@@ -62,7 +63,6 @@ class Client
             case 'saber':
                 if ($this->session) {
                     $driver = Saber::session($this->configs);
-                    gc_collect_cycles();
                 } else {
                     $driver = Saber::create($this->configs);
                 }
@@ -173,6 +173,7 @@ class Client
         } catch (Throwable $e) {
             if (!method_exists($e, 'getResponse') || (null === $response = $e->getResponse())) {
                 $message = sprintf('Something went wrong (%s).', $e->getMessage());
+                unset($response);
                 throw new RuntimeException($message, 500);
             }
         }
@@ -185,6 +186,7 @@ class Client
             );
             $body = (string)$response->getBody();
             $message .= (strlen($body) < 256 ? $body : '');
+            unset($response);
             throw new RuntimeException($body, $response->getStatusCode());
         }
 
