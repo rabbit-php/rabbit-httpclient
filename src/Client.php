@@ -54,8 +54,7 @@ class Client
         $default ??= $this->default;
         switch ($default) {
             case 'guzzle':
-                $handler = HandlerStack::create(create(StreamHandler::class));
-                $driver = new \GuzzleHttp\Client($this->configs += ['handler' => $handler]);
+                $driver = new \GuzzleHttp\Client($this->configs);
                 break;
             case 'saber':
                 if ($this->session) {
@@ -145,6 +144,15 @@ class Client
                     'save_to' => ArrayHelper::getOneValue($configs, ['download_dir'], null, true),
                     'body' => ArrayHelper::getOneValue($configs, ['data', 'body'], null, true)
                 ];
+                if (isset($configs['proxy'])) {
+                    if (is_array($configs['proxy'])) {
+                        foreach ($configs['proxy'] as &$proxy) {
+                            $proxy = UrlHelper::unParseUrl(parse_url($proxy), true, false);
+                        }
+                    } elseif (is_string($configs['proxy'])) {
+                        $configs['proxy'] = UrlHelper::unParseUrl(parse_url($configs['proxy']), true, false);
+                    }
+                }
                 $client = $this->getDriver($driver);
                 if (null !== $before = ArrayHelper::getOneValue($configs, ['before'], null, true)) {
                     $handler = $client->getConfig('handler');
