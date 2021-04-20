@@ -52,10 +52,10 @@ class Client
     {
         $default ??= $this->default;
         switch ($default) {
-            case 'guzzle':
+            case 'curl':
                 $driver = new \GuzzleHttp\Client($this->configs);
                 break;
-            case 'stream':
+            case 'guzzle':
                 $handler = HandlerStack::create(create(StreamHandler::class));
                 $driver = new \GuzzleHttp\Client($this->configs += ['handler' => $handler]);
                 break;
