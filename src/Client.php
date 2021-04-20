@@ -12,7 +12,6 @@ use Rabbit\Base\Helper\ArrayHelper;
 use Rabbit\Base\Helper\UrlHelper;
 use RuntimeException;
 use Swlib\Saber;
-use Swlib\SaberGM;
 use Throwable;
 
 /**
@@ -55,6 +54,10 @@ class Client
         switch ($default) {
             case 'guzzle':
                 $driver = new \GuzzleHttp\Client($this->configs);
+                break;
+            case 'stream':
+                $handler = HandlerStack::create(create(StreamHandler::class));
+                $driver = new \GuzzleHttp\Client($this->configs += ['handler' => $handler]);
                 break;
             case 'saber':
                 if ($this->session) {
@@ -136,7 +139,7 @@ class Client
                     'data' => ArrayHelper::getOneValue($configs, ['data', 'body'], null, true)
                 ]);
                 $duration = (int)($response->getTime() * 1000);
-            } elseif ($driver === 'guzzle') {
+            } elseif ($driver === 'guzzle' || $driver === 'stream') {
                 $method = ArrayHelper::getOneValue($configs, ['method']);
                 $uri = ArrayHelper::getOneValue($configs, ['uri', 'base_uri']);
                 $ext = [
