@@ -48,22 +48,23 @@ class Client
         $this->session = $session;
     }
 
-    public function getDriver(string $default = null)
+    public function getDriver(array $configs = null, string $default = null)
     {
         $default ??= $this->default;
+        $configs ??= $this->configs;
         switch ($default) {
             case 'curl':
-                $driver = new \GuzzleHttp\Client($this->configs);
+                $driver = new \GuzzleHttp\Client($configs);
                 break;
             case 'guzzle':
                 $handler = HandlerStack::create(create(StreamHandler::class));
-                $driver = new \GuzzleHttp\Client($this->configs += ['handler' => $handler]);
+                $driver = new \GuzzleHttp\Client($configs += ['handler' => $handler]);
                 break;
             case 'saber':
                 if ($this->session) {
-                    $driver = Saber::session($this->configs);
+                    $driver = Saber::session($configs);
                 } else {
-                    $driver = Saber::create($this->configs);
+                    $driver = Saber::create($configs);
                 }
                 break;
             default:
@@ -133,7 +134,7 @@ class Client
                 if (isset($configs['proxy']) && is_array($configs['proxy'])) {
                     $configs['proxy'] = current(array_values($configs['proxy']));
                 }
-                $response = $this->getDriver($driver)->request($configs += [
+                $response = $this->getDriver($configs, $driver)->request([
                     'uri_query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true),
                     'data' => ArrayHelper::getOneValue($configs, ['data', 'body'], null, true)
                 ]);
@@ -155,7 +156,7 @@ class Client
                         $configs['proxy'] = UrlHelper::unParseUrl(parse_url($configs['proxy']), true, false);
                     }
                 }
-                $client = $this->getDriver($driver);
+                $client = $this->getDriver([], $driver);
                 if (null !== $before = ArrayHelper::getOneValue($configs, ['before'], null, true)) {
                     $handler = $client->getConfig('handler');
                     $before = (array)$before;
