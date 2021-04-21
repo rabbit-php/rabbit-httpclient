@@ -50,7 +50,6 @@ class Client
 
     public function getDriver(string $default = null)
     {
-        gc_collect_cycles();
         $default ??= $this->default;
         switch ($default) {
             case 'curl':
