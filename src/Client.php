@@ -178,15 +178,15 @@ class Client
             }
         }
 
-        if (400 <= $response->getStatusCode()) {
+        if (2 !== $code = (($response->getStatusCode() / 100) % 10)) {
             $message = sprintf(
                 'Something went wrong (%s - %s).',
-                $response->getStatusCode(),
+                $code,
                 $response->getReasonPhrase()
             );
             $body = (string)$response->getBody();
             $message .= (strlen($body) < 256 ? $body : '');
-            $statusCode = $response->getStatusCode();
+            $statusCode = $code;
             unset($response);
             throw new RuntimeException($body, $statusCode);
         }
