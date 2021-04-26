@@ -42,10 +42,10 @@ class Client
      */
     public function __construct(array $configs = [], string $default = null, bool $session = false)
     {
-        $this->parseConfigs();
         $this->default = $default ?? getDI('http.driver', false) ?? 'saber';
         $this->configs = $configs;
         $this->session = $session;
+        $this->parseConfigs($this->configs);
     }
 
     public function getDriver(array $configs = null, string $default = null)
@@ -76,18 +76,18 @@ class Client
     /**
      * @return void
      */
-    private function parseConfigs(): void
+    private function parseConfigs(array &$configs): void
     {
-        if (null === ($uri = ArrayHelper::getOneValue($this->configs, ['uri', 'base_uri'])) || isset($this->configs['auth'])) {
+        if (null === ($uri = ArrayHelper::getOneValue($configs, ['uri', 'base_uri'])) || isset($configs['auth'])) {
             return;
         }
 
         $parsed = parse_url($uri);
         $user = isset($parsed['user']) ? $parsed['user'] : '';
         $pass = isset($parsed['pass']) ? $parsed['pass'] : '';
-        $this->configs['base_uri'] = UrlHelper::unParseUrl($parsed, false);
+        $configs['base_uri'] = UrlHelper::unParseUrl($parsed, false);
         if (!empty($parsed['user'])) {
-            $this->configs['auth'] = [
+            $configs['auth'] = [
                 $user,
                 $pass
             ];
