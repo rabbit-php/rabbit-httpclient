@@ -156,7 +156,7 @@ class Client
                         $configs['proxy'] = UrlHelper::unParseUrl(parse_url($configs['proxy']), true, false);
                     }
                 }
-                $client = $this->getDriver([], $driver);
+                $client = $this->getDriver($configs, $driver);
                 if (null !== $before = ArrayHelper::getOneValue($configs, ['before'], null, true)) {
                     $handler = $client->getConfig('handler');
                     $before = (array)$before;
