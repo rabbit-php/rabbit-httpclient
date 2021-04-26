@@ -173,22 +173,20 @@ class Client
         } catch (Throwable $e) {
             if (!method_exists($e, 'getResponse') || (null === $response = $e->getResponse())) {
                 $message = sprintf('Something went wrong (%s).', $e->getMessage());
-                unset($response);
                 throw new RuntimeException($message, 500);
             }
         }
 
-        if (2 !== $code = (($response->getStatusCode() / 100) % 10)) {
+        $code = $response->getStatusCode();
+        if (2 !== ($code / 100) % 10) {
             $message = sprintf(
                 'Something went wrong (%s - %s).',
                 $code,
                 $response->getReasonPhrase()
             );
-            $body = (string)$response->getBody();
-            $message .= (strlen($body) < 256 ? $body : '');
-            $statusCode = $code;
-            unset($response);
-            throw new RuntimeException($body, $statusCode);
+            $body = $response->getBody();
+            $message .= ($body->getSize() < 256 ? $body->getContents() : '');
+            throw new RuntimeException($body, $code);
         }
 
         return new Response($response, $duration);
