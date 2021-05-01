@@ -186,7 +186,7 @@ class Client
             );
             $body = $response->getBody();
             $message .= ($body->getSize() < 256 ? $body->getContents() : '');
-            throw new RuntimeException($body, $code);
+            throw new RuntimeException($message, $code);
         }
 
         return new Response($response, $duration);
