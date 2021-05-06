@@ -150,10 +150,10 @@ class Client
                 if (isset($configs['proxy'])) {
                     if (is_array($configs['proxy'])) {
                         foreach ($configs['proxy'] as &$proxy) {
-                            $proxy = UrlHelper::unParseUrl(parse_url($proxy), true, $driver === 'guzzle' ? 'http' : 'tcp');
+                            $proxy = UrlHelper::unParseUrl(parse_url($proxy), true, $driver === 'guzzle' ? 'http' : '');
                         }
                     } elseif (is_string($configs['proxy'])) {
-                        $configs['proxy'] = UrlHelper::unParseUrl(parse_url($configs['proxy']), true, $driver === 'guzzle' ? 'http' : 'tcp');
+                        $configs['proxy'] = UrlHelper::unParseUrl(parse_url($configs['proxy']), true, $driver === 'guzzle' ? 'http' : '');
                     }
                 }
                 $client = $this->getDriver($configs, $driver);
