@@ -134,10 +134,22 @@ class Client
                 if (isset($configs['proxy']) && is_array($configs['proxy'])) {
                     $configs['proxy'] = current(array_values($configs['proxy']));
                 }
-                $response = $this->getDriver($configs, $driver)->request([
-                    'uri_query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true),
-                    'data' => ArrayHelper::getOneValue($configs, ['data', 'body'], null, true)
-                ]);
+                if ($configs['target'] ?? false) {
+                    unset($configs['target']);
+                    $parsed = parse_url($configs['uri']);
+                    $request = $this->getDriver($configs, $driver)->request([
+                        'psr' => true,
+                        'uri_query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true),
+                        'data' => ArrayHelper::getOneValue($configs, ['data', 'body'], null, true)
+                    ])->withRequestTarget($parsed['path'] . '?' . $parsed['query']);
+                    $request->exec();
+                    $response = $request->recv();
+                } else {
+                    $response = $this->getDriver($configs, $driver)->request([
+                        'uri_query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true),
+                        'data' => ArrayHelper::getOneValue($configs, ['data', 'body'], null, true)
+                    ]);
+                }
                 $duration = (int)($response->getTime() * 1000);
             } elseif ($driver === 'guzzle' || $driver === 'curl') {
                 $method = ArrayHelper::getOneValue($configs, ['method']);
