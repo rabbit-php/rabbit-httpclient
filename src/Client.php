@@ -183,14 +183,16 @@ class Client
                 throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);
             }
         } catch (Throwable $e) {
+            $message = sprintf('Something went wrong (%s).', $e->getMessage());
             if (!method_exists($e, 'getResponse') || (null === $response = $e->getResponse())) {
-                $message = sprintf('Something went wrong (%s).', $e->getMessage());
                 throw new RuntimeException($message, 500);
+            } else {
+                throw new RuntimeException($message, $e->getCode());
             }
         }
 
         $code = $response->getStatusCode();
-        if (3 < ($code / 100) % 10) {
+        if (2 !== ($code / 100) % 10) {
             $message = sprintf(
                 'Something went wrong (%s - %s).',
                 $code,
