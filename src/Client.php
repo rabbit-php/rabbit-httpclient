@@ -7,6 +7,7 @@ namespace Rabbit\HttpClient;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Utils;
 use Rabbit\Base\Exception\NotSupportedException;
 use Rabbit\Base\Helper\ArrayHelper;
 use Rabbit\Base\Helper\UrlHelper;
@@ -112,7 +113,7 @@ class Client
         $driver = isset($args[2]) ? $args[2] : null;
         return $this->request(array_merge($opts, [
             'method' => $name,
-            'uri' => $uri
+            'uri' => (string)Utils::uriFor($uri)
         ]), $driver);
     }
 
