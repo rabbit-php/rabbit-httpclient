@@ -14,6 +14,7 @@ use Rabbit\Base\Helper\UrlHelper;
 use RuntimeException;
 use Swlib\Saber;
 use Swlib\Saber\ClientPool;
+use Swlib\Saber\Request;
 use Throwable;
 
 /**
@@ -180,6 +181,9 @@ class Client
                 throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);
             }
         } catch (Throwable $e) {
+            if (isset($request)) {
+                $this->release($request);
+            }
             $message = sprintf('Something went wrong (%s).', $e->getMessage());
             if (!method_exists($e, 'getResponse') || (null === $response = $e->getResponse())) {
                 throw new RuntimeException($message, 500);
@@ -198,21 +202,26 @@ class Client
             $body = $response->getBody();
             $message .= ($body->getSize() < 256 ? $body->getContents() : '');
             if (isset($request)) {
-                $arr = $request->getConnectionTarget() + $request->getProxy();
-                $str = '';
-                if (isset($arr['http_proxy_host'])) {
-                    $user = $arr['http_proxy_user'] ?? '';
-                    $pass = $arr['http_proxy_password'] ?? '';
-                    $host = $arr['http_proxy_host'] ?? '';
-                    $port = $arr['http_proxy_port'] ?? '';
-                    $str = ":{$user}:{$pass}@{$host}:{$port}";
-                }
-                $key = "{$arr['host']}:{$arr['port']}{$str}";
-                ClientPool::getInstance()->release($key);
+                $this->release($request);
             }
             throw new RuntimeException($message, $code);
         }
 
         return new Response($response, $duration);
+    }
+
+    private function release(Request $request): void
+    {
+        $arr = $request->getConnectionTarget() + $request->getProxy();
+        $str = '';
+        if (isset($arr['http_proxy_host'])) {
+            $user = $arr['http_proxy_user'] ?? '';
+            $pass = $arr['http_proxy_password'] ?? '';
+            $host = $arr['http_proxy_host'] ?? '';
+            $port = $arr['http_proxy_port'] ?? '';
+            $str = ":{$user}:{$pass}@{$host}:{$port}";
+        }
+        $key = "{$arr['host']}:{$arr['port']}{$str}";
+        ClientPool::getInstance()->release($key);
     }
 }
