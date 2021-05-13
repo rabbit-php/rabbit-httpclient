@@ -31,11 +31,15 @@ use Throwable;
 class Client
 {
     /** @var string */
-    private string $default;
+    private string $driver;
     /** @var array */
     protected array $configs = [];
 
     protected bool $session;
+
+    protected $client;
+
+    protected ?string $poolKey = null;
 
     /**
      * Client constructor.
@@ -43,58 +47,29 @@ class Client
      * @param string $default
      * @param array $driver
      */
-    public function __construct(array $configs = [], string $default = null, bool $session = false)
+    public function __construct(array $configs = [], string $driver = null, bool $session = false)
     {
-        $this->default = $default ?? getDI('http.driver', false) ?? 'saber';
+        $this->driver = $driver ?? getDI('http.driver', false) ?? 'saber';
         $this->configs = $configs;
         $this->session = $session;
-        $this->parseConfigs($this->configs);
-    }
-
-    public function getDriver(array $configs = null, string $default = null)
-    {
-        $default ??= $this->default;
-        $configs ??= $this->configs;
-        switch ($default) {
+        switch ($this->driver) {
             case 'curl':
-                $driver = new \GuzzleHttp\Client($configs);
+                $this->client = new \GuzzleHttp\Client();
                 break;
             case 'guzzle':
                 $handler = HandlerStack::create(create(StreamHandler::class));
-                $driver = new \GuzzleHttp\Client($configs += ['handler' => $handler]);
+                $this->client = new \GuzzleHttp\Client(['handler' => $handler]);
                 break;
             case 'saber':
                 if ($this->session) {
-                    $driver = Saber::session($configs);
+                    $this->client = Saber::session();
                 } else {
-                    $driver = Saber::create($configs);
+                    $this->client = Saber::create();
                 }
                 break;
             default:
-                throw new NotSupportedException('Not support the httpclient driver ' . $this->default);
+                throw new NotSupportedException('Not support the httpclient driver ' . $this->driver);
         };
-        return $driver;
-    }
-
-    /**
-     * @return void
-     */
-    private function parseConfigs(array &$configs): void
-    {
-        if (null === ($uri = ArrayHelper::getOneValue($configs, ['uri', 'base_uri'])) || isset($configs['auth'])) {
-            return;
-        }
-
-        $parsed = parse_url($uri);
-        $user = isset($parsed['user']) ? $parsed['user'] : '';
-        $pass = isset($parsed['pass']) ? $parsed['pass'] : '';
-        $configs['base_uri'] = UrlHelper::unParseUrl($parsed, false);
-        if (!empty($parsed['user'])) {
-            $configs['auth'] = [
-                $user,
-                $pass
-            ];
-        }
     }
 
     /**
@@ -124,24 +99,26 @@ class Client
      * @return Response
      * @throws Throwable
      */
-    public function request(array $configs = [], string $driver = null): Response
+    public function request(array $configs = []): Response
     {
+        $duration = -1;
         try {
             $configs = array_merge($this->configs, $configs);
-            $driver = $driver ?? $this->default;
-            $duration = -1;
-            if ($driver === 'saber') {
+            isset($config['base_uri']) && ($config['base_uri'] = (string)Utils::uriFor($config['base_uri']));
+            isset($config['uri']) && ($config['uri'] = (string)Utils::uriFor($config['uri']));
+            if ($this->driver === 'saber') {
                 if (isset($configs['auth']) && !isset($configs['auth']['username'])) {
                     [$configs['auth']['username'], $configs['auth']['password']] = ArrayHelper::remove($configs, 'auth');
                 }
                 if (isset($configs['proxy']) && is_array($configs['proxy'])) {
                     $configs['proxy'] = current(array_values($configs['proxy']));
                 }
-                $request = $this->getDriver($configs, $driver)->request([
+                $request = $this->client->request($configs + [
                     'psr' => true,
                     'uri_query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true),
                     'data' => ArrayHelper::getOneValue($configs, ['data', 'body'], null, true)
                 ]);
+                $this->poolKey = $this->getKey($request->getConnectionTarget() + $request->getProxy());
                 if ($configs['target'] ?? false) {
                     unset($configs['target']);
                     $parsed = parse_url($configs['uri']);
@@ -149,7 +126,7 @@ class Client
                 }
                 $response = $request->exec()->recv();
                 $duration = (int)($response->getTime() * 1000);
-            } elseif ($driver === 'guzzle' || $driver === 'curl') {
+            } else {
                 $method = ArrayHelper::getOneValue($configs, ['method']);
                 $uri = ArrayHelper::getOneValue($configs, ['uri', 'base_uri']);
                 $ext = [
@@ -160,29 +137,26 @@ class Client
                 if (isset($configs['proxy'])) {
                     if (is_array($configs['proxy'])) {
                         foreach ($configs['proxy'] as &$proxy) {
-                            $proxy = UrlHelper::unParseUrl(parse_url($proxy), true, $driver === 'guzzle' ? 'http' : '');
+                            $proxy = UrlHelper::unParseUrl(parse_url($proxy), true, $this->driver === 'guzzle' ? 'http' : '');
                         }
                     } elseif (is_string($configs['proxy'])) {
-                        $configs['proxy'] = UrlHelper::unParseUrl(parse_url($configs['proxy']), true, $driver === 'guzzle' ? 'http' : '');
+                        $configs['proxy'] = UrlHelper::unParseUrl(parse_url($configs['proxy']), true, $this->driver === 'guzzle' ? 'http' : '');
                     }
                 }
-                $client = $this->getDriver($configs, $driver);
                 if (null !== $before = ArrayHelper::getOneValue($configs, ['before'], null, true)) {
-                    $handler = $client->getConfig('handler');
+                    $handler = $this->client->getConfig('handler');
                     $before = (array)$before;
                     foreach ($before as $middleware) {
                         $handler->push(Middleware::mapRequest($middleware));
                     }
                 }
                 $start = microtime(true) * 1000;
-                $response = $client->request($method, $uri, array_filter(array_merge($configs, $ext)));
+                $response = $this->client->request($method, $uri, array_filter(array_merge($configs, $ext)));
                 $duration = (int)(microtime(true) * 1000 - $start);
-            } else {
-                throw new NotSupportedException('Not support the httpclient driver ' . $driver ?? $this->default);
             }
         } catch (Throwable $e) {
             if (isset($request)) {
-                $this->release($request);
+                $this->release($this->poolKey);
             }
             $message = sprintf('Something went wrong (%s).', $e->getMessage());
             if (!method_exists($e, 'getResponse') || (null === $response = $e->getResponse())) {
@@ -202,7 +176,7 @@ class Client
             $body = $response->getBody();
             $message .= ($body->getSize() < 256 ? $body->getContents() : '');
             if (isset($request)) {
-                $this->release($request);
+                $this->release();
             }
             throw new RuntimeException($message, $code);
         }
@@ -210,9 +184,21 @@ class Client
         return new Response($response, $duration);
     }
 
-    private function release(Request $request): void
+    public function getPool(): ?array
     {
-        $arr = $request->getConnectionTarget() + $request->getProxy();
+        if ($this->poolKey === null) {
+            return null;
+        }
+        return ClientPool::getInstance()->getStatus($this->poolKey);
+    }
+
+    public function release(): void
+    {
+        $this->poolKey && ClientPool::getInstance()->release($this->poolKey);
+    }
+
+    private function getKey(array $arr): string
+    {
         $str = '';
         if (isset($arr['http_proxy_host'])) {
             $user = $arr['http_proxy_user'] ?? '';
@@ -221,7 +207,6 @@ class Client
             $port = $arr['http_proxy_port'] ?? '';
             $str = ":{$user}:{$pass}@{$host}:{$port}";
         }
-        $key = "{$arr['host']}:{$arr['port']}{$str}";
-        ClientPool::getInstance()->release($key);
+        return "{$arr['host']}:{$arr['port']}{$str}";
     }
 }
