@@ -89,7 +89,7 @@ class Client
         $driver = isset($args[2]) ? $args[2] : null;
         return $this->request(array_merge($opts, [
             'method' => $name,
-            'uri' => (string)Utils::uriFor($uri)
+            'uri' => $uri
         ]), $driver);
     }
 
