@@ -152,7 +152,7 @@ class Client
             }
         } catch (Throwable $e) {
             if (isset($request)) {
-                $this->release($this->getKey($request->getConnectionTarget() + $request->getProxy()));
+                self::release($this->getKey($request->getConnectionTarget() + $request->getProxy()));
             }
             $message = sprintf('Something went wrong (%s).', $e->getMessage());
             if (!method_exists($e, 'getResponse') || (null === $response = $e->getResponse())) {
@@ -172,7 +172,7 @@ class Client
             $body = $response->getBody();
             $message .= ($body->getSize() < 256 ? $body->getContents() : '');
             if (isset($request)) {
-                $this->release($this->getKey($request->getConnectionTarget() + $request->getProxy()));
+                self::release($this->getKey($request->getConnectionTarget() + $request->getProxy()));
             }
             throw new RuntimeException($message, $code);
         }
@@ -180,12 +180,12 @@ class Client
         return new Response($response, $duration);
     }
 
-    public function getPool(string $key): ?array
+    public static function getPool(string $key): ?array
     {
         return ClientPool::getInstance()->getStatus($key);
     }
 
-    public function release(string $key): void
+    public static function release(string $key): void
     {
         !empty($key) && ClientPool::getInstance()->release($key);
     }
