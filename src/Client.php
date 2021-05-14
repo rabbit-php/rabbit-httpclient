@@ -14,7 +14,6 @@ use Rabbit\Base\Helper\UrlHelper;
 use RuntimeException;
 use Swlib\Saber;
 use Swlib\Saber\ClientPool;
-use Swlib\Saber\Request;
 use Throwable;
 
 /**
@@ -38,8 +37,6 @@ class Client
     protected bool $session;
 
     protected $client;
-
-    protected ?string $poolKey = null;
 
     /**
      * Client constructor.
@@ -118,7 +115,6 @@ class Client
                     'uri_query' => ArrayHelper::getOneValue($configs, ['uri_query', 'query'], null, true),
                     'data' => ArrayHelper::getOneValue($configs, ['data', 'body'], null, true)
                 ]);
-                $this->poolKey = $this->getKey($request->getConnectionTarget() + $request->getProxy());
                 if ($configs['target'] ?? false) {
                     unset($configs['target']);
                     $parsed = parse_url($configs['uri']);
@@ -156,7 +152,7 @@ class Client
             }
         } catch (Throwable $e) {
             if (isset($request)) {
-                $this->release($this->poolKey);
+                $this->release($this->getKey($request->getConnectionTarget() + $request->getProxy()));
             }
             $message = sprintf('Something went wrong (%s).', $e->getMessage());
             if (!method_exists($e, 'getResponse') || (null === $response = $e->getResponse())) {
@@ -176,7 +172,7 @@ class Client
             $body = $response->getBody();
             $message .= ($body->getSize() < 256 ? $body->getContents() : '');
             if (isset($request)) {
-                $this->release();
+                $this->release($this->getKey($request->getConnectionTarget() + $request->getProxy()));
             }
             throw new RuntimeException($message, $code);
         }
@@ -184,20 +180,17 @@ class Client
         return new Response($response, $duration);
     }
 
-    public function getPool(): ?array
+    public function getPool(string $key): ?array
     {
-        if ($this->poolKey === null) {
-            return null;
-        }
-        return ClientPool::getInstance()->getStatus($this->poolKey);
+        return ClientPool::getInstance()->getStatus($key);
     }
 
-    public function release(): void
+    public function release(string $key): void
     {
-        $this->poolKey && ClientPool::getInstance()->release($this->poolKey);
+        !empty($key) && ClientPool::getInstance()->release($key);
     }
 
-    private function getKey(array $arr): string
+    public static function getKey(array $arr): string
     {
         $str = '';
         if (isset($arr['http_proxy_host'])) {
