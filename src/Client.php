@@ -101,8 +101,8 @@ class Client
         $duration = -1;
         try {
             $configs = array_merge($this->configs, $configs);
-            isset($config['base_uri']) && ($config['base_uri'] = (string)Utils::uriFor($config['base_uri']));
-            isset($config['uri']) && ($config['uri'] = (string)Utils::uriFor($config['uri']));
+            isset($configs['base_uri']) && ($configs['base_uri'] = (string)Utils::uriFor($configs['base_uri']));
+            isset($configs['uri']) && ($configs['uri'] = (string)Utils::uriFor($configs['uri']));
             if ($this->driver === 'saber') {
                 if (isset($configs['auth']) && !isset($configs['auth']['username'])) {
                     [$configs['auth']['username'], $configs['auth']['password']] = ArrayHelper::remove($configs, 'auth');
