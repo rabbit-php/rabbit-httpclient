@@ -83,11 +83,10 @@ class Client
 
         $uri = $args[0];
         $opts = isset($args[1]) ? $args[1] : [];
-        $driver = isset($args[2]) ? $args[2] : null;
         return $this->request(array_merge($opts, [
             'method' => $name,
             'uri' => $uri
-        ]), $driver);
+        ]));
     }
 
     /**
@@ -151,9 +150,6 @@ class Client
                 $duration = (int)(microtime(true) * 1000 - $start);
             }
         } catch (Throwable $e) {
-            if (isset($request)) {
-                self::release($this->getKey($request->getConnectionTarget() + $request->getProxy()));
-            }
             $message = sprintf('Something went wrong (%s).', $e->getMessage());
             if (!method_exists($e, 'getResponse') || (null === $response = $e->getResponse())) {
                 throw new RuntimeException($message, 500);
@@ -171,9 +167,6 @@ class Client
             );
             $body = $response->getBody();
             $message .= ($body->getSize() < 256 ? $body->getContents() : '');
-            if (isset($request)) {
-                self::release($this->getKey($request->getConnectionTarget() + $request->getProxy()));
-            }
             throw new RuntimeException($message, $code);
         }
 
