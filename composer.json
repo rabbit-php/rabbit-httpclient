@@ -5,6 +5,7 @@
   "require": {
     "rabbit/base": "dev-master",
     "guzzlehttp/guzzle": "^7.0",
+    "swlib/saber": "^1",
     "ext-json": "*",
     "ext-simplexml": "*",
     "ext-libxml": "*",
