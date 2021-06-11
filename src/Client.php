@@ -159,7 +159,7 @@ class Client
         }
 
         $code = $response->getStatusCode();
-        if (2 !== ($code / 100) % 10) {
+        if (3 < ($code / 100) % 10) {
             $message = sprintf(
                 'Something went wrong (%s - %s).',
                 $code,
