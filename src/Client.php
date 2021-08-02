@@ -154,7 +154,7 @@ class Client
             if (!method_exists($e, 'getResponse') || (null === $response = $e->getResponse())) {
                 throw new RuntimeException($message, 500);
             } else {
-                throw new RuntimeException($message, $e->getCode());
+                throw new RuntimeException($response->getBody()->getContents(), $response->getStatusCode());
             }
         }
 
