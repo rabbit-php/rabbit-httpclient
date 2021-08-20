@@ -117,7 +117,7 @@ class Client
                 if ($configs['target'] ?? false) {
                     unset($configs['target']);
                     $parsed = parse_url($configs['uri']);
-                    $request->withRequestTarget($parsed['path'] . '?' . ($parsed['query'] ?? ''));
+                    $request->withRequestTarget(($parsed['path'] ?? '/') . (isset($parsed['query']) ? "?{$parsed['query']}" : ''));
                 }
                 $response = $request->exec()->recv();
                 $duration = (int)($response->getTime() * 1000);
