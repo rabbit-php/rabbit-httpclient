@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Rabbit\HttpClient;
 
+use GuzzleHttp\Client as GuzzleHttpClient;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -29,21 +30,11 @@ use Throwable;
  */
 class Client
 {
-    /** @var string */
     private string $driver;
-    /** @var array */
     protected array $configs = [];
-
     protected bool $session;
+    protected Saber|GuzzleHttpClient $client;
 
-    protected $client;
-
-    /**
-     * Client constructor.
-     * @param array $configs
-     * @param string $default
-     * @param array $driver
-     */
     public function __construct(array $configs = [], string $driver = null, bool $session = false)
     {
         $this->driver = $driver ?? getDI('http.driver', false) ?? 'saber';
@@ -51,11 +42,11 @@ class Client
         $this->session = $session;
         switch ($this->driver) {
             case 'curl':
-                $this->client = new \GuzzleHttp\Client();
+                $this->client = new GuzzleHttpClient();
                 break;
             case 'guzzle':
                 $handler = HandlerStack::create(create(StreamHandler::class));
-                $this->client = new \GuzzleHttp\Client(['handler' => $handler]);
+                $this->client = new GuzzleHttpClient(['handler' => $handler]);
                 break;
             case 'saber':
                 if ($this->session) {
@@ -69,12 +60,11 @@ class Client
         };
     }
 
-    /**
-     * @param $name
-     * @param $args
-     * @return Response
-     * @throws Throwable
-     */
+    public function getClient(): Saber|GuzzleHttpClient
+    {
+        return $this->client;
+    }
+
     public function __call($name, $args)
     {
         if (count($args) < 1) {
@@ -89,12 +79,6 @@ class Client
         ]));
     }
 
-    /**
-     * @param array $configs
-     * @param string|null $driver
-     * @return Response
-     * @throws Throwable
-     */
     public function request(array $configs = []): Response
     {
         $duration = -1;
