@@ -137,21 +137,8 @@ class Client
             $message = sprintf('Something went wrong (%s).', $e->getMessage());
             if (!method_exists($e, 'getResponse') || (null === $response = $e->getResponse())) {
                 throw new RuntimeException($message, 500);
-            } else {
-                throw new RuntimeException($response->getBody()->getContents(), $response->getStatusCode());
             }
-        }
-
-        $code = $response->getStatusCode();
-        if (3 < ($code / 100) % 10) {
-            $message = sprintf(
-                'Something went wrong (%s - %s).',
-                $code,
-                $response->getReasonPhrase()
-            );
-            $body = $response->getBody();
-            $message .= ($body->getSize() < 256 ? $body->getContents() : '');
-            throw new RuntimeException($message, $code);
+            $duration = (int)($response->getTime() * 1000);
         }
 
         return new Response($response, $duration);
