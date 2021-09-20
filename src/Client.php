@@ -136,7 +136,7 @@ class Client
         } catch (Throwable $e) {
             $message = sprintf('Something went wrong (%s).', $e->getMessage());
             if (!method_exists($e, 'getResponse') || (null === $response = $e->getResponse())) {
-                throw new RuntimeException($message, 500);
+                throw new RuntimeException($message, $e->getCode());
             }
             $duration = (int)($response->getTime() * 1000);
         }
