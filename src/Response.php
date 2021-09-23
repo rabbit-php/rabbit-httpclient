@@ -151,7 +151,9 @@ class Response implements ResponseInterface
     public function domObject(): DOMDocument
     {
         $data = (string)$this->response->getBody();
-        return DataParser::stringToDomObject($data);
+        $dom = DataParser::stringToDomObject($data);
+        libxml_clear_errors();
+        return $dom;
     }
 
     public function xpathObject(): DOMXPath
@@ -159,7 +161,9 @@ class Response implements ResponseInterface
         $data = (string)$this->response->getBody();
         $dom = DataParser::stringToDomObject($data);
         $dom->normalize();
-        return new DOMXPath($dom);
+        $xpath = new DOMXPath($dom);
+        libxml_clear_errors();
+        return $xpath;
     }
 
     public function getDuration(): int
