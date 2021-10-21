@@ -138,7 +138,11 @@ class Client
             if (!method_exists($e, 'getResponse') || (null === $response = $e->getResponse())) {
                 throw new RuntimeException($message, $e->getCode());
             }
-            $duration = (int)($response->getTime() * 1000);
+            if (method_exists($response, 'getTime')) {
+                $duration = (int)($response->getTime() * 1000);
+            } else {
+                $duration = 0;
+            }
         }
 
         return new Response($response, $duration);
