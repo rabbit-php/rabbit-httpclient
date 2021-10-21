@@ -9,6 +9,9 @@ use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Utils;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use Rabbit\Base\Exception\NotSupportedException;
 use Rabbit\Base\Helper\ArrayHelper;
 use Rabbit\Base\Helper\UrlHelper;
@@ -28,7 +31,7 @@ use Throwable;
  * @method Response delete(string $url = null, array $configs = array(), string $driver = 'saber'): Response
  * @method Response options(string $url, array $configs = array(), string $driver = 'saber') : Response
  */
-class Client
+class Client implements ClientInterface
 {
     private string $driver;
     protected array $configs = [];
@@ -142,6 +145,21 @@ class Client
         }
 
         return new Response($response, $duration);
+    }
+
+    public function sendRequest(RequestInterface $request): ResponseInterface
+    {
+        if ($this->driver === 'saber') {
+            $options = [
+                'method' => $request->getMethod(),
+                'target' => $request->getRequestTarget(),
+                'uri' => $request->getUri(),
+                'headers' => $request->getHeaders(),
+                'protocol' => $request->getProtocolVersion()
+            ];
+            return $this->request($options);
+        }
+        return $this->client->sendRequest($request);
     }
 
     public static function getPool(string $key): ?array
