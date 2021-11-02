@@ -154,14 +154,14 @@ class Client implements ClientInterface
     public function sendRequest(RequestInterface $request): ResponseInterface
     {
         if ($this->driver === 'saber') {
-            $options = [
+            return $this->request([
                 'method' => $request->getMethod(),
                 'target' => $request->getRequestTarget(),
                 'uri' => $request->getUri(),
                 'headers' => $request->getHeaders(),
-                'protocol' => $request->getProtocolVersion()
-            ];
-            return $this->request($options);
+                'protocol' => $request->getProtocolVersion(),
+                'body' => $request->getBody()
+            ]);
         }
         return $this->client->sendRequest($request);
     }
