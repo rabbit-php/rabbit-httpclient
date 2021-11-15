@@ -45,11 +45,11 @@ class Client implements ClientInterface
         $this->session = $session;
         switch ($this->driver) {
             case 'curl':
-                $this->client = new GuzzleHttpClient();
+                $this->client = new GuzzleHttpClient($configs);
                 break;
             case 'guzzle':
                 $handler = HandlerStack::create(create(StreamHandler::class));
-                $this->client = new GuzzleHttpClient(['handler' => $handler]);
+                $this->client = new GuzzleHttpClient($configs += ['handler' => $handler]);
                 break;
             case 'saber':
                 if ($this->session) {
