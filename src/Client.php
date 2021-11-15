@@ -45,11 +45,11 @@ class Client implements ClientInterface
         $this->session = $session;
         switch ($this->driver) {
             case 'curl':
-                $this->client = new GuzzleHttpClient($configs);
+                $this->client = new GuzzleHttpClient();
                 break;
             case 'guzzle':
                 $handler = HandlerStack::create(create(StreamHandler::class));
-                $this->client = new GuzzleHttpClient($configs += ['handler' => $handler]);
+                $this->client = new GuzzleHttpClient(['handler' => $handler]);
                 break;
             case 'saber':
                 if ($this->session) {
@@ -153,17 +153,14 @@ class Client implements ClientInterface
 
     public function sendRequest(RequestInterface $request): ResponseInterface
     {
-        if ($this->driver === 'saber') {
-            return $this->request([
-                'method' => $request->getMethod(),
-                'target' => $request->getRequestTarget(),
-                'uri' => $request->getUri(),
-                'headers' => $request->getHeaders(),
-                'protocol' => $request->getProtocolVersion(),
-                'body' => $request->getBody()
-            ]);
-        }
-        return $this->client->sendRequest($request);
+        return $this->request([
+            'method' => $request->getMethod(),
+            'target' => $request->getRequestTarget(),
+            'uri' => $request->getUri(),
+            'headers' => $request->getHeaders(),
+            'protocol' => $request->getProtocolVersion(),
+            'body' => $request->getBody()
+        ]);
     }
 
     public static function getPool(string $key): ?array
