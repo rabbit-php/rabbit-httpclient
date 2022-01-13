@@ -76,17 +76,18 @@ class Client implements ClientInterface
 
         $uri = $args[0];
         $opts = isset($args[1]) ? $args[1] : [];
-        return $this->request(array_merge($opts, [
+        return $this->request([
+            ...$opts,
             'method' => $name,
             'uri' => $uri
-        ]));
+        ]);
     }
 
     public function request(array $configs = []): Response
     {
         $duration = -1;
         try {
-            $configs = array_merge($this->configs, $configs);
+            $configs = [...$this->configs, ...$configs];
             isset($configs['base_uri']) && ($configs['base_uri'] = (string)Utils::uriFor($configs['base_uri']));
             isset($configs['uri']) && ($configs['uri'] = (string)Utils::uriFor($configs['uri']));
             if ($this->driver === 'saber') {
@@ -133,7 +134,7 @@ class Client implements ClientInterface
                     }
                 }
                 $start = microtime(true) * 1000;
-                $response = $this->client->request($method, $uri, array_filter(array_merge($configs, $ext)));
+                $response = $this->client->request($method, $uri, array_filter([...$configs, ...$ext]));
                 $duration = (int)(microtime(true) * 1000 - $start);
             }
         } catch (Throwable $e) {

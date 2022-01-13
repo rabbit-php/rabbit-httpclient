@@ -3,7 +3,7 @@
   "description": "rabbit httpclient",
   "type": "library",
   "require": {
-    "php": ">=8.0.0",
+    "php": ">=8.1.0",
     "rabbit/base": "dev-master",
     "guzzlehttp/guzzle": "^7.0",
     "swlib/saber": "^1",
