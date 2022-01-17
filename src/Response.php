@@ -17,14 +17,8 @@ use Swlib\Util\DataParser;
  */
 class Response implements ResponseInterface
 {
-    private ResponseInterface $response;
-
-    private int $duration;
-
-    public function __construct(ResponseInterface $response, int $duration)
+    public function __construct(private ResponseInterface $response, private int $duration)
     {
-        $this->response = $response;
-        $this->duration = $duration;
     }
 
     public function __get($name)

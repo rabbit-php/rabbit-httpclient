@@ -31,18 +31,14 @@ use Throwable;
  * @method Response delete(string $url = null, array $configs = array(), string $driver = 'saber'): Response
  * @method Response options(string $url, array $configs = array(), string $driver = 'saber') : Response
  */
-class Client implements ClientInterface
+final class Client implements ClientInterface
 {
     private string $driver;
-    protected array $configs = [];
-    protected bool $session;
     protected Saber|GuzzleHttpClient $client;
 
-    public function __construct(array $configs = [], string $driver = null, bool $session = false)
+    public function __construct(protected array $configs = [], string $driver = null, protected bool $session = false)
     {
         $this->driver = $driver ?? getDI('http.driver', false) ?? 'saber';
-        $this->configs = $configs;
-        $this->session = $session;
         switch ($this->driver) {
             case 'curl':
                 $this->client = new GuzzleHttpClient();
