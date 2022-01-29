@@ -38,7 +38,7 @@ final class Client implements ClientInterface
 
     public function __construct(protected array $configs = [], string $driver = null, protected bool $session = false)
     {
-        $this->driver = $driver ?? getDI('http.driver', false) ?? 'saber';
+        $this->driver = $driver ?? config('http.driver', false) ?? 'saber';
         switch ($this->driver) {
             case 'curl':
                 $this->client = new GuzzleHttpClient();
