@@ -7,7 +7,7 @@
     "rabbit/base": "dev-master",
     "guzzlehttp/guzzle": "^7.0",
     "swlib/saber": "dev-master",
-    "psr/http-client": "^1.0",
+    "psr/http-client": "v1.x-dev",
     "ext-json": "*",
     "ext-simplexml": "*",
     "ext-libxml": "*",
