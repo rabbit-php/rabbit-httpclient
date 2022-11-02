@@ -6,7 +6,7 @@
     "php": ">=8.1.0",
     "rabbit/base": "dev-master",
     "guzzlehttp/guzzle": "^7.0",
-    "swlib/saber": "^1",
+    "swlib/saber": "dev-master",
     "psr/http-client": "^1.0",
     "ext-json": "*",
     "ext-simplexml": "*",
